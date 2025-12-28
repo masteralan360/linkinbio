@@ -127,12 +127,23 @@ export function useAuth() {
     };
 
     const loginWithCredentials = async (email: string, password: string) => {
+        if (!isSupabaseConfigured) {
+            throw new Error("Supabase is not configured. Please set environment variables.");
+        }
+
         setIsLoggingIn(true);
         try {
-            // Note: Supabase doesn't support email/password auth by default
-            // This would need to be set up in Supabase dashboard
-            // For now, we'll throw an error
-            throw new Error("Email/password authentication not configured. Please use Google or GitHub.");
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (error) throw error;
+
+            if (data.user) {
+                await loadUserProfile(data.user.id);
+                setLocation("/dashboard");
+            }
         } catch (error) {
             setIsLoggingIn(false);
             throw error;
