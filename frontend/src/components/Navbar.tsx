@@ -16,7 +16,7 @@ export default function Navbar() {
                             <Link2 className="w-5 h-5 text-primary-foreground" />
                         </div>
                         <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                            LinkBio
+                            IraqLinked
                         </span>
                     </a>
                 </Link>

@@ -112,7 +112,7 @@ export default function PublicProfile() {
                 <p className="text-xs text-muted-foreground">
                     Powered by{" "}
                     <a href="/" className="text-primary hover:underline">
-                        LinkBio
+                        IraqLinked
                     </a>
                 </p>
             </div>
