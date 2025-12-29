@@ -60,24 +60,18 @@ export function useAuth() {
         }
 
         try {
-            const { data, error } = await supabase
-                .from("profiles")
-                .select("id, name, email, image")
-                .eq("id", userId)
-                .single();
+            const { data: authData } = await supabase.auth.getUser();
 
-            if (error) throw error;
-
-            if (data) {
+            if (authData?.user) {
                 setUser({
-                    id: data.id,
-                    email: data.email,
-                    name: data.name,
-                    image: data.image,
+                    id: authData.user.id,
+                    email: authData.user.email || '',
+                    name: authData.user.user_metadata?.full_name || authData.user.user_metadata?.name || 'User',
+                    image: authData.user.user_metadata?.avatar_url || null,
                 });
             }
         } catch (error) {
-            console.error("Error loading user profile:", error);
+            console.error("Error loading user:", error);
             setUser(null);
         } finally {
             setIsLoading(false);
