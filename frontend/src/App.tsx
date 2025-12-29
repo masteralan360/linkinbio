@@ -1,6 +1,5 @@
 import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
-import { useAuth } from "@/hooks/useAuth";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { SupabaseConfigError } from "@/components/SupabaseConfigError";
 import Navbar from "@/components/Navbar";
@@ -10,24 +9,13 @@ import PublicProfile from "@/pages/PublicProfile";
 import Home from "@/pages/Home";
 
 function App() {
-    const { isLoading } = useAuth();
-
     // Show configuration error if Supabase is not configured
     if (!isSupabaseConfigured) {
         return <SupabaseConfigError />;
     }
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
-                <div className="animate-pulse flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/20" />
-                    <div className="h-4 w-32 rounded bg-muted" />
-                </div>
-            </div>
-        );
-    }
-
+    // Don't block on auth loading for public pages
+    // Each page that needs auth (Dashboard, Login) handles its own loading state
     return (
         <div className="min-h-screen bg-background">
             <Navbar />

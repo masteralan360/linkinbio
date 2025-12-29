@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
@@ -10,38 +10,74 @@ interface AuthUser {
     image: string | null;
 }
 
+// Timeout for auth operations to prevent infinite loading
+const AUTH_TIMEOUT_MS = 10000;
+
 export function useAuth() {
     const [, setLocation] = useLocation();
     const [user, setUser] = useState<AuthUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const initRef = useRef(false);
 
     useEffect(() => {
+        // Prevent double initialization in StrictMode
+        if (initRef.current) return;
+        initRef.current = true;
+
         // If Supabase is not configured, skip auth initialization
         if (!isSupabaseConfigured) {
             setIsLoading(false);
             return;
         }
 
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user) {
-                loadUserProfile(session.user.id);
-            } else {
+        let mounted = true;
+        let timeoutId: ReturnType<typeof setTimeout>;
+
+        // Set a timeout to prevent infinite loading
+        timeoutId = setTimeout(() => {
+            if (mounted && isLoading) {
+                console.warn("Auth loading timeout - forcing completion");
                 setIsLoading(false);
             }
-        }).catch((error) => {
-            console.error("Error getting session:", error);
-            setIsLoading(false);
-        });
+        }, AUTH_TIMEOUT_MS);
+
+        // Get initial session
+        const initAuth = async () => {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+
+                if (error) {
+                    console.error("Error getting session:", error);
+                    if (mounted) setIsLoading(false);
+                    return;
+                }
+
+                if (session?.user && mounted) {
+                    await loadUserProfile(session.user.id);
+                } else if (mounted) {
+                    setIsLoading(false);
+                }
+            } catch (error) {
+                console.error("Error getting session:", error);
+                if (mounted) setIsLoading(false);
+            }
+        };
+
+        initAuth();
 
         // Listen for auth changes
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (!mounted) return;
+
             if (session?.user) {
-                await loadUserProfile(session.user.id);
+                // Only reload if user changed
+                if (user?.id !== session.user.id) {
+                    await loadUserProfile(session.user.id);
+                }
             } else {
                 setUser(null);
                 setIsLoading(false);
@@ -49,6 +85,8 @@ export function useAuth() {
         });
 
         return () => {
+            mounted = false;
+            clearTimeout(timeoutId);
             subscription.unsubscribe();
         };
     }, []);
@@ -60,7 +98,14 @@ export function useAuth() {
         }
 
         try {
-            const { data: authData } = await supabase.auth.getUser();
+            const { data: authData, error } = await supabase.auth.getUser();
+
+            if (error) {
+                console.error("Error loading user:", error);
+                setUser(null);
+                setIsLoading(false);
+                return;
+            }
 
             if (authData?.user) {
                 setUser({
@@ -171,5 +216,3 @@ export function useAuth() {
         logout,
     };
 }
-
-
