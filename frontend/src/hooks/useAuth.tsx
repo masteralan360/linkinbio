@@ -233,6 +233,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
                     image: data.user.user_metadata?.avatar_url || null,
                 });
+                // Small delay to ensure auth state is settled before redirect
+                await new Promise(resolve => setTimeout(resolve, 100));
                 // Redirect to profile maker
                 setLocation("/profile-maker");
             }

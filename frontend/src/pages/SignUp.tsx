@@ -18,10 +18,12 @@ export default function SignUp() {
     const [signUpError, setSignUpError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (isAuthenticated) {
+        // Only redirect if already authenticated AND not currently signing up
+        // The signUpWithPasskey function handles redirect to profile-maker
+        if (isAuthenticated && !isSigningUp) {
             setLocation("/profile-maker");
         }
-    }, [isAuthenticated, setLocation]);
+    }, [isAuthenticated, isSigningUp, setLocation]);
 
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
