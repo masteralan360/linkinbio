@@ -112,3 +112,36 @@ export function createPreviewUrl(blob: Blob): string {
 export function revokePreviewUrl(url: string): void {
     URL.revokeObjectURL(url);
 }
+
+// Extract file path from Supabase public URL
+function extractPathFromUrl(publicUrl: string): string | null {
+    try {
+        // URL format: https://xxx.supabase.co/storage/v1/object/public/profile-images/userId/timestamp.jpg
+        const match = publicUrl.match(/profile-images\/(.+)$/);
+        return match ? match[1] : null;
+    } catch {
+        return null;
+    }
+}
+
+// Delete old profile image from Supabase Storage
+export async function deleteProfileImage(publicUrl: string): Promise<void> {
+    if (!isStorageConfigured || !publicUrl) {
+        return;
+    }
+
+    const filePath = extractPathFromUrl(publicUrl);
+    if (!filePath) {
+        console.warn('Could not extract file path from URL:', publicUrl);
+        return;
+    }
+
+    const { error } = await supabase.storage
+        .from('profile-images')
+        .remove([filePath]);
+
+    if (error) {
+        console.error('Error deleting old profile image:', error);
+        // Don't throw - deletion failure shouldn't block new upload
+    }
+}

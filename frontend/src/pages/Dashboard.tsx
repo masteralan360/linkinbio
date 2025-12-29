@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useLinks } from "@/hooks/useLinks";
+import { profileApi } from "@/lib/api";
+import { compressImage, uploadProfileImage, deleteProfileImage, createPreviewUrl, revokePreviewUrl } from "@/lib/imageUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
     Dialog,
     DialogContent,
@@ -47,6 +50,8 @@ import {
     Link2,
     Copy,
     Check,
+    Camera,
+    Loader2,
 } from "lucide-react";
 import type { Link } from "@/lib/api";
 
@@ -166,6 +171,12 @@ export default function Dashboard() {
     const [editingLink, setEditingLink] = useState<Link | null>(null);
     const [copied, setCopied] = useState(false);
 
+    // Profile picture state
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(user?.image || null);
+
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
@@ -238,6 +249,53 @@ export default function Dashboard() {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    // Profile picture handlers
+    const handleImageSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user) return;
+
+        if (!file.type.startsWith('image/')) {
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            return;
+        }
+
+        setIsUploadingImage(true);
+
+        try {
+            // Compress the image
+            const compressedBlob = await compressImage(file, 400, 400, 0.85);
+
+            // Create preview
+            const previewUrl = createPreviewUrl(compressedBlob);
+            if (imagePreview) {
+                revokePreviewUrl(imagePreview);
+            }
+            setImagePreview(previewUrl);
+
+            // Delete old image if exists
+            if (currentImageUrl) {
+                await deleteProfileImage(currentImageUrl);
+            }
+
+            // Upload new image
+            const newImageUrl = await uploadProfileImage(compressedBlob, user.id);
+
+            // Update profile in database
+            await profileApi.update({ image: newImageUrl });
+
+            setCurrentImageUrl(newImageUrl);
+            setImagePreview(null);
+            revokePreviewUrl(previewUrl);
+        } catch (err) {
+            console.error('Error uploading image:', err);
+        } finally {
+            setIsUploadingImage(false);
+        }
+    }, [user, currentImageUrl, imagePreview]);
+
     if (authLoading || !isAuthenticated) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
@@ -248,6 +306,49 @@ export default function Dashboard() {
 
     return (
         <div className="max-w-3xl mx-auto space-y-8">
+            {/* Profile Section */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Profile</CardTitle>
+                    <CardDescription>Your public profile picture</CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center gap-6">
+                    <div
+                        className="relative cursor-pointer group"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <Avatar className="w-20 h-20 ring-2 ring-border">
+                            {(imagePreview || currentImageUrl) && (
+                                <AvatarImage src={imagePreview || currentImageUrl || undefined} alt={user?.name || ""} />
+                            )}
+                            <AvatarFallback className="text-2xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
+                                {user?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || "U"}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            {isUploadingImage ? (
+                                <Loader2 className="w-6 h-6 text-white animate-spin" />
+                            ) : (
+                                <Camera className="w-6 h-6 text-white" />
+                            )}
+                        </div>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageSelect}
+                            className="hidden"
+                            disabled={isUploadingImage}
+                        />
+                    </div>
+                    <div>
+                        <p className="font-medium">{user?.name || "User"}</p>
+                        <p className="text-sm text-muted-foreground">{user?.email}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Click avatar to change photo</p>
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
