@@ -1,4 +1,4 @@
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/useAuth";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -12,10 +12,13 @@ import PublicProfile from "@/pages/PublicProfile";
 import Home from "@/pages/Home";
 
 function AppContent() {
+    const [location] = useLocation();
+    const isPublicProfile = location.startsWith('/profile/');
+
     return (
         <div className="min-h-screen bg-background">
-            <Navbar />
-            <main className="container mx-auto px-4 py-8">
+            {!isPublicProfile && <Navbar />}
+            <main className={isPublicProfile ? "" : "container mx-auto px-4 py-8"}>
                 <Switch>
                     <Route path="/" component={Home} />
                     <Route path="/login" component={Login} />

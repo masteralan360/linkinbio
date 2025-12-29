@@ -186,6 +186,7 @@ export interface ProfileData {
         id: string;
         name: string | null;
         image: string | null;
+        bio: string | null;
     };
     links: Link[];
 }
@@ -195,7 +196,7 @@ export const profileApi = {
         // Get user profile
         const { data: profile, error: profileError } = await supabase
             .from("profiles")
-            .select("id, name, image")
+            .select("id, name, image, bio")
             .eq("id", userId)
             .single();
 
@@ -217,6 +218,7 @@ export const profileApi = {
                 id: profile.id,
                 name: profile.name,
                 image: profile.image,
+                bio: profile.bio || null,
             },
             links: (links || []).map(transformLink),
         };
@@ -238,7 +240,13 @@ export const profileApi = {
             })
             .eq("id", user.id);
 
-        if (error) throw new Error(error.message);
+        if (error) {
+            // Check for unique violation on name column
+            if (error.code === '23505') {
+                throw new Error("This display name is already taken. Please choose another.");
+            }
+            throw new Error(error.message);
+        }
     },
 };
 

@@ -52,8 +52,10 @@ import {
     Check,
     Camera,
     Loader2,
+    Save,
 } from "lucide-react";
 import type { Link } from "@/lib/api";
+import { Textarea } from "@/components/ui/textarea";
 
 const linkSchema = z.object({
     title: z.string().min(1, "Title is required").max(100),
@@ -175,7 +177,23 @@ export default function Dashboard() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(user?.image || null);
+    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
+
+    // Profile editing state
+    const [profileName, setProfileName] = useState("");
+    const [profileBio, setProfileBio] = useState("");
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
+    const [profileError, setProfileError] = useState<string | null>(null);
+
+    // Sync user data when it loads
+    useEffect(() => {
+        if (user) {
+            setCurrentImageUrl(user.image || null);
+            setProfileName(user.name || "");
+            // Note: bio comes from profile, not auth user - would need to fetch
+        }
+    }, [user]);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -263,6 +281,7 @@ export default function Dashboard() {
         }
 
         setIsUploadingImage(true);
+        const oldImageUrl = currentImageUrl;
 
         try {
             // Compress the image
@@ -275,26 +294,56 @@ export default function Dashboard() {
             }
             setImagePreview(previewUrl);
 
-            // Delete old image if exists
-            if (currentImageUrl) {
-                await deleteProfileImage(currentImageUrl);
-            }
-
-            // Upload new image
+            // Upload new image first
             const newImageUrl = await uploadProfileImage(compressedBlob, user.id);
+
+            // Add cache-busting timestamp
+            const cacheBustedUrl = `${newImageUrl}?t=${Date.now()}`;
 
             // Update profile in database
             await profileApi.update({ image: newImageUrl });
 
-            setCurrentImageUrl(newImageUrl);
+            // Delete old image after successful upload
+            if (oldImageUrl && !oldImageUrl.includes('avatar')) {
+                await deleteProfileImage(oldImageUrl);
+            }
+
+            setCurrentImageUrl(cacheBustedUrl);
             setImagePreview(null);
             revokePreviewUrl(previewUrl);
         } catch (err) {
             console.error('Error uploading image:', err);
+            setImagePreview(null);
         } finally {
             setIsUploadingImage(false);
         }
     }, [user, currentImageUrl, imagePreview]);
+
+    // Save profile name and bio
+    const handleSaveProfile = async () => {
+        if (!user) return;
+
+        if (!profileName.trim()) {
+            setProfileError("Name is required");
+            return;
+        }
+
+        setIsSavingProfile(true);
+        setProfileError(null);
+
+        try {
+            await profileApi.update({
+                name: profileName.trim(),
+                bio: profileBio.trim() || undefined,
+            });
+            setProfileSaveSuccess(true);
+            setTimeout(() => setProfileSaveSuccess(false), 2000);
+        } catch (err) {
+            setProfileError(err instanceof Error ? err.message : "Failed to save profile");
+        } finally {
+            setIsSavingProfile(false);
+        }
+    };
 
     if (authLoading || !isAuthenticated) {
         return (
@@ -310,42 +359,87 @@ export default function Dashboard() {
             <Card>
                 <CardHeader>
                     <CardTitle>Profile</CardTitle>
-                    <CardDescription>Your public profile picture</CardDescription>
+                    <CardDescription>Edit your public profile information</CardDescription>
                 </CardHeader>
-                <CardContent className="flex items-center gap-6">
-                    <div
-                        className="relative cursor-pointer group"
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        <Avatar className="w-20 h-20 ring-2 ring-border">
-                            {(imagePreview || currentImageUrl) && (
-                                <AvatarImage src={imagePreview || currentImageUrl || undefined} alt={user?.name || ""} />
-                            )}
-                            <AvatarFallback className="text-2xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
-                                {user?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || "U"}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            {isUploadingImage ? (
-                                <Loader2 className="w-6 h-6 text-white animate-spin" />
-                            ) : (
-                                <Camera className="w-6 h-6 text-white" />
-                            )}
+                <CardContent className="space-y-6">
+                    {profileError && (
+                        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                            <p className="text-sm text-destructive">{profileError}</p>
                         </div>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageSelect}
-                            className="hidden"
-                            disabled={isUploadingImage}
-                        />
+                    )}
+
+                    {/* Avatar and basic info row */}
+                    <div className="flex items-start gap-6">
+                        <div
+                            className="relative cursor-pointer group flex-shrink-0"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <Avatar className="w-20 h-20 ring-2 ring-border">
+                                {(imagePreview || currentImageUrl) && (
+                                    <AvatarImage src={imagePreview || currentImageUrl || undefined} alt={user?.name || ""} />
+                                )}
+                                <AvatarFallback className="text-2xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
+                                    {profileName?.charAt(0) || user?.email?.charAt(0).toUpperCase() || "U"}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                {isUploadingImage ? (
+                                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                                ) : (
+                                    <Camera className="w-6 h-6 text-white" />
+                                )}
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageSelect}
+                                className="hidden"
+                                disabled={isUploadingImage}
+                            />
+                        </div>
+                        <div className="flex-1 space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="profileName">Display Name</Label>
+                                <Input
+                                    id="profileName"
+                                    value={profileName}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfileName(e.target.value)}
+                                    placeholder="Your name"
+                                    maxLength={50}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="profileBio">Bio</Label>
+                                <Textarea
+                                    id="profileBio"
+                                    value={profileBio}
+                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setProfileBio(e.target.value)}
+                                    placeholder="Tell people about yourself..."
+                                    maxLength={160}
+                                    rows={2}
+                                    className="resize-none"
+                                />
+                                <p className="text-xs text-muted-foreground text-right">{profileBio.length}/160</p>
+                            </div>
+                            <Button
+                                onClick={handleSaveProfile}
+                                disabled={isSavingProfile}
+                                size="sm"
+                                className="gap-2"
+                            >
+                                {isSavingProfile ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : profileSaveSuccess ? (
+                                    <Check className="w-4 h-4" />
+                                ) : (
+                                    <Save className="w-4 h-4" />
+                                )}
+                                {profileSaveSuccess ? "Saved!" : "Save Profile"}
+                            </Button>
+                        </div>
                     </div>
-                    <div>
-                        <p className="font-medium">{user?.name || "User"}</p>
-                        <p className="text-sm text-muted-foreground">{user?.email}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Click avatar to change photo</p>
-                    </div>
+                    <p className="text-xs text-muted-foreground">Click avatar to change photo</p>
                 </CardContent>
             </Card>
 
