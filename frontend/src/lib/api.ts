@@ -222,3 +222,22 @@ export const profileApi = {
         };
     },
 };
+
+// Settings API for app configuration
+export const settingsApi = {
+    // Validate passkey for signup
+    validatePasskey: async (passkey: string): Promise<boolean> => {
+        const { data, error } = await supabase
+            .from("app_settings")
+            .select("value")
+            .eq("key", "signup_passkey")
+            .single();
+
+        if (error) {
+            console.error("Error validating passkey:", error);
+            return false;
+        }
+
+        return data?.value === passkey;
+    },
+};

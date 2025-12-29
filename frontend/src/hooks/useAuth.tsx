@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { useLocation } from "wouter";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { settingsApi } from "@/lib/api";
 
 interface AuthUser {
     id: string;
@@ -15,9 +16,11 @@ interface AuthContextType {
     isLoading: boolean;
     isLoggingIn: boolean;
     isLoggingOut: boolean;
+    isSigningUp: boolean;
     loginWithGoogle: () => Promise<void>;
     loginWithGithub: () => Promise<void>;
     loginWithCredentials: (email: string, password: string) => Promise<void>;
+    signUpWithPasskey: (email: string, password: string, passkey: string) => Promise<void>;
     logout: () => Promise<void>;
 }
 
@@ -33,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [isSigningUp, setIsSigningUp] = useState(false);
     const initRef = useRef(false);
     const mountedRef = useRef(true);
 
@@ -197,6 +201,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const signUpWithPasskey = async (email: string, password: string, passkey: string) => {
+        if (!isSupabaseConfigured) {
+            throw new Error("Supabase is not configured. Please set environment variables.");
+        }
+
+        setIsSigningUp(true);
+
+        try {
+            // First validate the passkey
+            const isValidPasskey = await settingsApi.validatePasskey(passkey);
+            if (!isValidPasskey) {
+                throw new Error("Invalid passkey. Please contact the administrator.");
+            }
+
+            // Create the user account (auto-confirm is enabled in Supabase)
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/profile-maker`,
+                },
+            });
+
+            if (error) throw error;
+
+            if (data.user) {
+                setUser({
+                    id: data.user.id,
+                    email: data.user.email || '',
+                    name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
+                    image: data.user.user_metadata?.avatar_url || null,
+                });
+                // Redirect to profile maker
+                setLocation("/profile-maker");
+            }
+        } catch (error) {
+            console.error("Sign up error:", error);
+            throw error;
+        } finally {
+            setIsSigningUp(false);
+        }
+    };
+
     const logout = async () => {
         setIsLoggingOut(true);
         try {
@@ -218,15 +265,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isLoggingIn,
         isLoggingOut,
+        isSigningUp,
         loginWithGoogle,
         loginWithGithub,
         loginWithCredentials,
+        signUpWithPasskey,
         logout,
     };
 
     return (
-        <AuthContext.Provider value= { value } >
-        { children }
+        <AuthContext.Provider value={value}>
+            {children}
         </AuthContext.Provider>
     );
 }

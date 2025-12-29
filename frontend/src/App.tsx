@@ -5,7 +5,9 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { SupabaseConfigError } from "@/components/SupabaseConfigError";
 import Navbar from "@/components/Navbar";
 import Login from "@/pages/Login";
+import SignUp from "@/pages/SignUp";
 import Dashboard from "@/pages/Dashboard";
+import ProfileMaker from "@/pages/ProfileMaker";
 import PublicProfile from "@/pages/PublicProfile";
 import Home from "@/pages/Home";
 
@@ -17,7 +19,9 @@ function AppContent() {
                 <Switch>
                     <Route path="/" component={Home} />
                     <Route path="/login" component={Login} />
+                    <Route path="/signup" component={SignUp} />
                     <Route path="/dashboard" component={Dashboard} />
+                    <Route path="/profile-maker" component={ProfileMaker} />
                     <Route path="/profile/:userId" component={PublicProfile} />
                     <Route>
                         <div className="text-center py-20">
@@ -26,6 +30,7 @@ function AppContent() {
                         </div>
                     </Route>
                 </Switch>
+
             </main>
             <Toaster />
         </div>

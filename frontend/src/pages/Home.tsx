@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Link2, ArrowRight, Sparkles } from "lucide-react";
+import { Link2, ArrowRight, Sparkles, UserPlus } from "lucide-react";
 
 export default function Home() {
     const { isAuthenticated, user } = useAuth();
@@ -50,14 +50,23 @@ export default function Home() {
                         )}
                     </>
                 ) : (
-                    <Link href="/login">
-                        <Button size="lg" className="gap-2 group">
-                            Get Started
-                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                    </Link>
+                    <>
+                        <Link href="/signup">
+                            <Button size="lg" className="gap-2 group">
+                                <UserPlus className="w-4 h-4" />
+                                Sign Up
+                            </Button>
+                        </Link>
+                        <Link href="/login">
+                            <Button size="lg" variant="outline" className="gap-2 group">
+                                Sign In
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </Button>
+                        </Link>
+                    </>
                 )}
             </div>
+
 
             {/* Features Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-20 max-w-3xl">
