@@ -221,6 +221,25 @@ export const profileApi = {
             links: (links || []).map(transformLink),
         };
     },
+
+    // Update user profile
+    update: async (data: { name?: string; bio?: string; image?: string }): Promise<void> => {
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const { error } = await supabase
+            .from("profiles")
+            .update({
+                name: data.name,
+                bio: data.bio,
+                image: data.image,
+            })
+            .eq("id", user.id);
+
+        if (error) throw new Error(error.message);
+    },
 };
 
 // Settings API for app configuration
