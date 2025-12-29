@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { profileApi } from "@/lib/api";
-import { compressImage, uploadToB2, isB2Configured, createPreviewUrl, revokePreviewUrl } from "@/lib/imageUtils";
+import { compressImage, uploadProfileImage, isStorageConfigured, createPreviewUrl, revokePreviewUrl } from "@/lib/imageUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,14 +109,14 @@ export default function ProfileMaker() {
         try {
             let imageUrl: string | undefined;
 
-            // Upload image if selected
-            if (imageFile && isB2Configured) {
+            // Upload image if selected and user is authenticated
+            if (imageFile && isStorageConfigured && user) {
                 try {
                     const compressedBlob = await compressImage(imageFile, 400, 400, 0.85);
-                    imageUrl = await uploadToB2(compressedBlob, imageFile.name);
+                    imageUrl = await uploadProfileImage(compressedBlob, user.id);
                 } catch (uploadErr) {
                     console.error("Image upload error:", uploadErr);
-                    // Continue without image if B2 upload fails
+                    // Continue without image if upload fails
                 }
             }
 
@@ -221,7 +221,7 @@ export default function ProfileMaker() {
                                 className="hidden"
                             />
                         </div>
-                        {!isB2Configured && (
+                        {!isStorageConfigured && (
                             <p className="text-xs text-amber-500">
                                 ⚠️ Image storage is not configured. Profile picture won't be saved.
                             </p>

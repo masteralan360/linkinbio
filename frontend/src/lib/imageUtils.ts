@@ -1,6 +1,8 @@
 /**
- * Image utility functions for compression and upload to Backblaze B2
+ * Image utility functions for compression and upload to Supabase Storage
  */
+
+import { supabase, isSupabaseConfigured } from "./supabase";
 
 // Compress image using canvas API
 export async function compressImage(
@@ -64,46 +66,41 @@ export async function compressImage(
     });
 }
 
-// Get Backblaze B2 configuration from environment
-const B2_ENDPOINT = import.meta.env.VITE_B2_ENDPOINT || '';
-const B2_BUCKET = import.meta.env.VITE_B2_BUCKET || '';
-const B2_KEY_ID = import.meta.env.VITE_B2_KEY_ID || '';
-const B2_APP_KEY = import.meta.env.VITE_B2_APP_KEY || '';
+// Storage is configured if Supabase is configured
+export const isStorageConfigured = isSupabaseConfigured;
 
-export const isB2Configured = B2_ENDPOINT && B2_BUCKET && B2_KEY_ID && B2_APP_KEY;
-
-// Upload image to Backblaze B2 via presigned URL or direct upload
-export async function uploadToB2(
+// Upload image to Supabase Storage
+export async function uploadProfileImage(
     blob: Blob,
-    fileName: string
+    userId: string
 ): Promise<string> {
-    if (!isB2Configured) {
-        throw new Error('Backblaze B2 is not configured. Please set environment variables.');
+    if (!isStorageConfigured) {
+        throw new Error('Supabase is not configured. Please set environment variables.');
     }
 
-    // Generate unique filename
+    // Generate unique filename using userId and timestamp
     const timestamp = Date.now();
-    const uniqueFileName = `profiles/${timestamp}-${fileName}`;
+    const fileName = `${userId}/${timestamp}.jpg`;
 
-    // For B2 S3-compatible API, we need to use presigned URLs or a backend proxy
-    // Since we're doing client-side upload, we'll use the S3-compatible API
-    const uploadUrl = `https://${B2_BUCKET}.${B2_ENDPOINT}/${uniqueFileName}`;
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+        .from('profile-images')
+        .upload(fileName, blob, {
+            contentType: 'image/jpeg',
+            upsert: true, // Overwrite if exists
+        });
 
-    const response = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'image/jpeg',
-            'Authorization': `Basic ${btoa(`${B2_KEY_ID}:${B2_APP_KEY}`)}`,
-        },
-        body: blob,
-    });
-
-    if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+    if (error) {
+        console.error('Upload error:', error);
+        throw new Error(`Upload failed: ${error.message}`);
     }
 
-    // Return the public URL
-    return `https://${B2_BUCKET}.${B2_ENDPOINT}/${uniqueFileName}`;
+    // Get public URL
+    const { data: urlData } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(data.path);
+
+    return urlData.publicUrl;
 }
 
 // Create a data URL from a blob for preview
