@@ -25,6 +25,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 // Auth timeout - max time to wait for auth to resolve
 const AUTH_TIMEOUT_MS = 8000;
+const LOGIN_TIMEOUT_MS = 15000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [, setLocation] = useLocation();
@@ -161,11 +162,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setIsLoggingIn(true);
+
+        // Create a timeout to prevent infinite hanging
+        const loginTimeout = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error("Login timed out. Please try again.")), LOGIN_TIMEOUT_MS);
+        });
+
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+            // Race between login and timeout
+            const result = await Promise.race([
+                supabase.auth.signInWithPassword({ email, password }),
+                loginTimeout
+            ]);
+
+            const { data, error } = result as { data: { user: any }, error: any };
 
             if (error) throw error;
 
@@ -176,12 +186,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
                     image: data.user.user_metadata?.avatar_url || null,
                 });
-                setIsLoggingIn(false);
                 setLocation("/dashboard");
             }
         } catch (error) {
-            setIsLoggingIn(false);
+            console.error("Login error:", error);
             throw error;
+        } finally {
+            // Always reset isLoggingIn
+            setIsLoggingIn(false);
         }
     };
 
