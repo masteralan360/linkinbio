@@ -1,7 +1,6 @@
-import { useEffect, useState, useRef } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { useLocation } from "wouter";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthUser {
     id: string;
@@ -10,21 +9,37 @@ interface AuthUser {
     image: string | null;
 }
 
-// Timeout for auth operations to prevent infinite loading
-const AUTH_TIMEOUT_MS = 10000;
+interface AuthContextType {
+    user: AuthUser | null;
+    isAuthenticated: boolean;
+    isLoading: boolean;
+    isLoggingIn: boolean;
+    isLoggingOut: boolean;
+    loginWithGoogle: () => Promise<void>;
+    loginWithGithub: () => Promise<void>;
+    loginWithCredentials: (email: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
+}
 
-export function useAuth() {
+const AuthContext = createContext<AuthContextType | null>(null);
+
+// Auth timeout - max time to wait for auth to resolve
+const AUTH_TIMEOUT_MS = 8000;
+
+export function AuthProvider({ children }: { children: ReactNode }) {
     const [, setLocation] = useLocation();
     const [user, setUser] = useState<AuthUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const initRef = useRef(false);
+    const mountedRef = useRef(true);
 
     useEffect(() => {
-        // Prevent double initialization in StrictMode
+        // Prevent double initialization
         if (initRef.current) return;
         initRef.current = true;
+        mountedRef.current = true;
 
         // If Supabase is not configured, skip auth initialization
         if (!isSupabaseConfigured) {
@@ -32,12 +47,11 @@ export function useAuth() {
             return;
         }
 
-        let mounted = true;
         let timeoutId: ReturnType<typeof setTimeout>;
 
         // Set a timeout to prevent infinite loading
         timeoutId = setTimeout(() => {
-            if (mounted && isLoading) {
+            if (mountedRef.current && isLoading) {
                 console.warn("Auth loading timeout - forcing completion");
                 setIsLoading(false);
             }
@@ -50,18 +64,24 @@ export function useAuth() {
 
                 if (error) {
                     console.error("Error getting session:", error);
-                    if (mounted) setIsLoading(false);
+                    if (mountedRef.current) setIsLoading(false);
                     return;
                 }
 
-                if (session?.user && mounted) {
-                    await loadUserProfile(session.user.id);
-                } else if (mounted) {
+                if (session?.user && mountedRef.current) {
+                    setUser({
+                        id: session.user.id,
+                        email: session.user.email || '',
+                        name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
+                        image: session.user.user_metadata?.avatar_url || null,
+                    });
+                    setIsLoading(false);
+                } else if (mountedRef.current) {
                     setIsLoading(false);
                 }
             } catch (error) {
                 console.error("Error getting session:", error);
-                if (mounted) setIsLoading(false);
+                if (mountedRef.current) setIsLoading(false);
             }
         };
 
@@ -71,57 +91,27 @@ export function useAuth() {
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (!mounted) return;
+            if (!mountedRef.current) return;
 
             if (session?.user) {
-                // Only reload if user changed
-                if (user?.id !== session.user.id) {
-                    await loadUserProfile(session.user.id);
-                }
+                setUser({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
+                    image: session.user.user_metadata?.avatar_url || null,
+                });
             } else {
                 setUser(null);
-                setIsLoading(false);
             }
+            setIsLoading(false);
         });
 
         return () => {
-            mounted = false;
+            mountedRef.current = false;
             clearTimeout(timeoutId);
             subscription.unsubscribe();
         };
     }, []);
-
-    const loadUserProfile = async (userId: string) => {
-        if (!isSupabaseConfigured) {
-            setIsLoading(false);
-            return;
-        }
-
-        try {
-            const { data: authData, error } = await supabase.auth.getUser();
-
-            if (error) {
-                console.error("Error loading user:", error);
-                setUser(null);
-                setIsLoading(false);
-                return;
-            }
-
-            if (authData?.user) {
-                setUser({
-                    id: authData.user.id,
-                    email: authData.user.email || '',
-                    name: authData.user.user_metadata?.full_name || authData.user.user_metadata?.name || 'User',
-                    image: authData.user.user_metadata?.avatar_url || null,
-                });
-            }
-        } catch (error) {
-            console.error("Error loading user:", error);
-            setUser(null);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const loginWithGoogle = async () => {
         if (!isSupabaseConfigured) {
@@ -180,7 +170,13 @@ export function useAuth() {
             if (error) throw error;
 
             if (data.user) {
-                await loadUserProfile(data.user.id);
+                setUser({
+                    id: data.user.id,
+                    email: data.user.email || '',
+                    name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
+                    image: data.user.user_metadata?.avatar_url || null,
+                });
+                setIsLoggingIn(false);
                 setLocation("/dashboard");
             }
         } catch (error) {
@@ -204,7 +200,7 @@ export function useAuth() {
         }
     };
 
-    return {
+    const value: AuthContextType = {
         user,
         isAuthenticated: !!user,
         isLoading,
@@ -215,4 +211,18 @@ export function useAuth() {
         loginWithCredentials,
         logout,
     };
+
+    return (
+        <AuthContext.Provider value= { value } >
+        { children }
+        </AuthContext.Provider>
+    );
+}
+
+export function useAuth() {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
 }
