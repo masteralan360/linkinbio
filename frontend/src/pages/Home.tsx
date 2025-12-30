@@ -41,7 +41,7 @@ export default function Home() {
                             </Button>
                         </Link>
                         {user && (
-                            <Link href={`/profile/${user.id}`}>
+                            <Link href={`/profile/${user.username || user.id}`}>
                                 <Button size="lg" variant="outline" className="gap-2">
                                     <Sparkles className="w-4 h-4" />
                                     View My Page

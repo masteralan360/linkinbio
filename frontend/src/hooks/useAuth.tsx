@@ -8,6 +8,7 @@ interface AuthUser {
     email: string;
     name: string | null;
     image: string | null;
+    username: string | null;
 }
 
 interface AuthContextType {
@@ -79,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         email: session.user.email || '',
                         name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
                         image: session.user.user_metadata?.avatar_url || null,
+                        username: session.user.user_metadata?.username || null,
                     });
                     setIsLoading(false);
                 } else if (mountedRef.current) {
@@ -104,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     email: session.user.email || '',
                     name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
                     image: session.user.user_metadata?.avatar_url || null,
+                    username: session.user.user_metadata?.username || null,
                 });
             } else {
                 setUser(null);
@@ -189,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     email: data.user.email || '',
                     name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
                     image: data.user.user_metadata?.avatar_url || null,
+                    username: data.user.user_metadata?.username || null,
                 });
                 setLocation("/dashboard");
             }
@@ -235,6 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     email: data.user.email || '',
                     name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
                     image: data.user.user_metadata?.avatar_url || null,
+                    username: data.user.user_metadata?.username || null,
                 });
                 // Small delay to ensure auth state is settled before redirect
                 await new Promise(resolve => setTimeout(resolve, 100));
