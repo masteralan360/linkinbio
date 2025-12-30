@@ -200,6 +200,13 @@ export default function Dashboard() {
             if (user) {
                 try {
                     const profileData = await profileApi.get(user.id);
+
+                    // Require name to be set, otherwise redirect to profile maker
+                    if (!profileData.user.name) {
+                        setLocation("/profile-maker");
+                        return;
+                    }
+
                     setCurrentImageUrl(profileData.user.image || null);
                     setProfileName(profileData.user.name || "");
                     setProfileBio(profileData.user.bio || "");
