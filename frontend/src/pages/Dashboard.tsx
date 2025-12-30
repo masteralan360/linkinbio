@@ -347,7 +347,7 @@ export default function Dashboard() {
         try {
             await profileApi.update({
                 name: profileName.trim(),
-                bio: profileBio.trim() || undefined,
+                bio: profileBio.trim() || null,
             });
             setProfileSaveSuccess(true);
             setTimeout(() => setProfileSaveSuccess(false), 2000);

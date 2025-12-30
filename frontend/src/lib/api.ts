@@ -225,7 +225,7 @@ export const profileApi = {
     },
 
     // Update user profile
-    update: async (data: { name?: string; bio?: string; image?: string }): Promise<void> => {
+    update: async (data: { name?: string; bio?: string | null; image?: string | null }): Promise<void> => {
         const {
             data: { user },
         } = await supabase.auth.getUser();
