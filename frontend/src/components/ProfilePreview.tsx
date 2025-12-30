@@ -1,6 +1,6 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link2 } from "lucide-react";
+import { Link2, ExternalLink } from "lucide-react";
 import { ThemeConfig, defaultTheme, Link as AppLink } from "@/lib/api";
 
 interface ProfilePreviewProps {
@@ -67,7 +67,7 @@ export default function ProfilePreview({ user, links, theme = defaultTheme }: Pr
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {links.map((link) => (
                             <a
                                 key={link.id}
@@ -77,18 +77,48 @@ export default function ProfilePreview({ user, links, theme = defaultTheme }: Pr
                                 className="group block transition-transform hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 <div
-                                    className="p-4 rounded-lg shadow-sm font-medium transition-all"
-                                    style={buttonStyle}
+                                    className="relative p-4 rounded-xl shadow-sm border border-transparent hover:border-primary/20 hover:shadow-md transition-all bg-white"
+                                    style={{
+                                        // We override background only if theme demands, but user asked for "old design" which had white cards usually?
+                                        // The user said "change the buttons color", so we use that.
+                                        backgroundColor: theme.buttonColor,
+                                        color: theme.linksTitleColor,
+                                    }}
                                 >
                                     <div className="flex items-center justify-between">
-                                        {/* Use flex logic for alignment */}
-                                        <span className="w-full truncate">{link.title}</span>
+                                        {/* Left Icon (Fixed) */}
+                                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 mr-3">
+                                            <Link2 className="w-5 h-5" />
+                                        </div>
+
+                                        {/* Text Container (Flex grow with alignment) */}
+                                        <div
+                                            className="flex-grow min-w-0 mx-2"
+                                            style={{ textAlign: theme.linksAlignment as any }}
+                                        >
+                                            <span className="font-medium truncate block text-lg">
+                                                {link.title}
+                                            </span>
+                                        </div>
+
+                                        {/* Right Icon (Fixed) */}
+                                        <div className="flex-shrink-0 ml-3 text-muted-foreground/50 group-hover:text-purple-600 transition-colors">
+                                            <ExternalLink className="w-5 h-5" />
+                                        </div>
                                     </div>
                                 </div>
                             </a>
                         ))}
                     </div>
                 )}
+
+                {/* Footer */}
+                <div className="text-center pb-8 pt-4">
+                    <p className="text-sm font-medium opacity-60 flex items-center justify-center gap-1" style={{ color: theme.bioColor }}>
+                        Powered by
+                        <span className="text-primary font-bold hover:underline cursor-pointer">IraqLinked</span>
+                    </p>
+                </div>
             </div>
         </div>
     );
