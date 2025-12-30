@@ -180,6 +180,32 @@ export const linksApi = {
     },
 };
 
+export interface ThemeConfig {
+    backgroundType: 'solid' | 'gradient';
+    backgroundColor: string;
+    gradientStart: string;
+    gradientEnd: string;
+    profileShape: 'circle' | 'square' | 'rounded';
+    nameColor: string;
+    bioColor: string;
+    linksTitleColor: string;
+    buttonColor: string;
+    linksAlignment: 'left' | 'center' | 'right';
+}
+
+export const defaultTheme: ThemeConfig = {
+    backgroundType: 'solid',
+    backgroundColor: '#ffffff',
+    gradientStart: '#ffffff',
+    gradientEnd: '#f0f0f0',
+    profileShape: 'circle',
+    nameColor: '#000000',
+    bioColor: '#666666',
+    linksTitleColor: '#000000',
+    buttonColor: '#ffffff',
+    linksAlignment: 'center',
+};
+
 // Profile API using Supabase
 export interface ProfileData {
     user: {
@@ -188,6 +214,7 @@ export interface ProfileData {
         image: string | null;
         bio: string | null;
         username: string | null;
+        theme: ThemeConfig;
     };
     links: Link[];
 }
@@ -197,7 +224,7 @@ export const profileApi = {
         // Get user profile
         const { data: profile, error: profileError } = await supabase
             .from("profiles")
-            .select("id, name, image, bio, username")
+            .select("id, name, image, bio, username, theme")
             .eq("id", userId)
             .single();
 
@@ -209,7 +236,6 @@ export const profileApi = {
             .from("links")
             .select("*")
             .eq("user_id", userId)
-            .eq("is_public", true)
             .order("position", { ascending: true });
 
         if (linksError) throw new Error(linksError.message);
@@ -221,6 +247,7 @@ export const profileApi = {
                 image: profile.image,
                 bio: profile.bio || null,
                 username: profile.username || null,
+                theme: profile.theme || defaultTheme,
             },
             links: (links || []).map(transformLink),
         };
@@ -230,7 +257,7 @@ export const profileApi = {
         // Get user profile by username
         const { data: profile, error: profileError } = await supabase
             .from("profiles")
-            .select("id, name, image, bio, username")
+            .select("id, name, image, bio, username, theme")
             .eq("username", username)
             .single();
 
@@ -254,13 +281,14 @@ export const profileApi = {
                 image: profile.image,
                 bio: profile.bio || null,
                 username: profile.username,
+                theme: profile.theme || defaultTheme,
             },
             links: (links || []).map(transformLink),
         };
     },
 
     // Update user profile
-    update: async (data: { name?: string; bio?: string | null; image?: string | null }): Promise<void> => {
+    update: async (data: { name?: string; bio?: string | null; image?: string | null; theme?: ThemeConfig }): Promise<void> => {
         const {
             data: { user },
         } = await supabase.auth.getUser();
@@ -268,11 +296,7 @@ export const profileApi = {
 
         const { error } = await supabase
             .from("profiles")
-            .update({
-                name: data.name,
-                bio: data.bio,
-                image: data.image,
-            })
+            .update(data)
             .eq("id", user.id);
 
         if (error) {

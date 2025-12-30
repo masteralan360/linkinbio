@@ -4,6 +4,7 @@ import { profileApi } from "@/lib/api";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, Link2, AlertCircle } from "lucide-react";
+import ProfilePreview from "@/components/ProfilePreview";
 
 export default function PublicProfile() {
     const [, params] = useRoute("/profile/:username");
@@ -37,7 +38,7 @@ export default function PublicProfile() {
 
     if (error || !profile) {
         return (
-            <div className="max-w-md mx-auto">
+            <div className="max-w-md mx-auto p-8">
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                         <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
@@ -53,74 +54,11 @@ export default function PublicProfile() {
         );
     }
 
-    const { user, links } = profile;
-
     return (
-        <div className="min-h-screen bg-background">
-            <div className="max-w-md mx-auto space-y-8 px-4 py-8">
-                {/* Profile Header */}
-                <div className="flex flex-col items-center gap-4 pt-4">
-                    <div className="relative">
-                        <div className="absolute inset-0 blur-3xl bg-primary/20 rounded-full scale-150" />
-                        <Avatar className="relative w-32 h-32 ring-4 ring-background shadow-2xl">
-                            {user.image && <AvatarImage src={user.image} alt={user.name || ""} />}
-                            <AvatarFallback className="text-4xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
-                                {user.name?.charAt(0) || "U"}
-                            </AvatarFallback>
-                        </Avatar>
-                    </div>
-                    <h1 className="text-3xl font-bold mt-2">{user.name || "User"}</h1>
-                    {user.bio && (
-                        <p className="text-muted-foreground text-center max-w-sm">{user.bio}</p>
-                    )}
-                </div>
-
-                {/* Links */}
-                {links.length === 0 ? (
-                    <Card>
-                        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
-                                <Link2 className="w-6 h-6 text-muted-foreground" />
-                            </div>
-                            <p className="text-muted-foreground">No links yet</p>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <div className="space-y-3">
-                        {links.map((link) => (
-                            <a
-                                key={link.id}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group block"
-                            >
-                                <Card className="transition-all hover:scale-[1.02] hover:shadow-lg hover:border-primary/50">
-                                    <CardContent className="flex items-center justify-between p-4">
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center flex-shrink-0">
-                                                <Link2 className="w-5 h-5 text-primary" />
-                                            </div>
-                                            <span className="font-medium truncate">{link.title}</span>
-                                        </div>
-                                        <ExternalLink className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                                    </CardContent>
-                                </Card>
-                            </a>
-                        ))}
-                    </div>
-                )}
-
-                {/* Footer */}
-                <div className="text-center pb-8">
-                    <p className="text-xs text-muted-foreground">
-                        Powered by{" "}
-                        <a href="/" className="text-primary hover:underline">
-                            IraqLinked
-                        </a>
-                    </p>
-                </div>
-            </div>
-        </div>
+        <ProfilePreview
+            user={profile.user}
+            links={profile.links}
+            theme={profile.user.theme}
+        />
     );
 }
