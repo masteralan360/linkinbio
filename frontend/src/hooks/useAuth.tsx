@@ -8,6 +8,7 @@ interface AuthUser {
     email: string;
     name: string | null;
     image: string | null;
+    username: string | null;
 }
 
 interface AuthContextType {
@@ -22,6 +23,7 @@ interface AuthContextType {
     loginWithCredentials: (email: string, password: string) => Promise<void>;
     signUpWithPasskey: (email: string, password: string, passkey: string, username: string) => Promise<void>;
     logout: () => Promise<void>;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -39,6 +41,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isSigningUp, setIsSigningUp] = useState(false);
     const initRef = useRef(false);
     const mountedRef = useRef(true);
+
+    const refreshUser = async () => {
+        if (!mountedRef.current) return;
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user) {
+                setUser(null);
+                return;
+            }
+
+            // Fetch latest profile data from profiles table
+            const { data: profile, error } = await supabase
+                .from("profiles")
+                .select("id, name, image, username")
+                .eq("id", session.user.id)
+                .single();
+
+            if (error) {
+                console.error("Error fetching profile:", error);
+                // Fallback to metadata if profile fetch fails
+                setUser({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
+                    image: session.user.user_metadata?.avatar_url || null,
+                    username: session.user.user_metadata?.username || null
+                });
+                return;
+            }
+
+            if (profile && mountedRef.current) {
+                setUser({
+                    id: profile.id,
+                    email: session.user.email || '',
+                    name: profile.name || 'User',
+                    image: profile.image,
+                    username: profile.username
+                });
+            }
+        } catch (error) {
+            console.error("Error refreshing user:", error);
+        }
+    };
 
     useEffect(() => {
         // Prevent double initialization
@@ -62,32 +108,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         }, AUTH_TIMEOUT_MS);
 
-        // Get initial session
+        // Get initial session and profile
         const initAuth = async () => {
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-
-                if (error) {
-                    console.error("Error getting session:", error);
-                    if (mountedRef.current) setIsLoading(false);
-                    return;
-                }
-
-                if (session?.user && mountedRef.current) {
-                    setUser({
-                        id: session.user.id,
-                        email: session.user.email || '',
-                        name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
-                        image: session.user.user_metadata?.avatar_url || null,
-                    });
-                    setIsLoading(false);
-                } else if (mountedRef.current) {
-                    setIsLoading(false);
-                }
-            } catch (error) {
-                console.error("Error getting session:", error);
-                if (mountedRef.current) setIsLoading(false);
-            }
+            await refreshUser();
+            if (mountedRef.current) setIsLoading(false);
         };
 
         initAuth();
@@ -99,22 +123,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!mountedRef.current) return;
 
             if (session?.user) {
-                setUser({
-                    id: session.user.id,
-                    email: session.user.email || '',
-                    name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
-                    image: session.user.user_metadata?.avatar_url || null,
-                });
+                await refreshUser();
             } else {
                 setUser(null);
             }
             setIsLoading(false);
         });
 
+        // Setup real-time listener for current user's profile
+        let profileSubscription: any = null;
+
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user && mountedRef.current) {
+                profileSubscription = supabase
+                    .channel(`profile-${session.user.id}`)
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: '*',
+                            schema: 'public',
+                            table: 'profiles',
+                            filter: `id=eq.${session.user.id}`
+                        },
+                        () => {
+                            refreshUser();
+                        }
+                    )
+                    .subscribe();
+            }
+        });
+
         return () => {
             mountedRef.current = false;
             clearTimeout(timeoutId);
             subscription.unsubscribe();
+            if (profileSubscription) profileSubscription.unsubscribe();
         };
     }, []);
 
@@ -189,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     email: data.user.email || '',
                     name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
                     image: data.user.user_metadata?.avatar_url || null,
+                    username: data.user.user_metadata?.username || null
                 });
                 setLocation("/dashboard");
             }
@@ -235,6 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     email: data.user.email || '',
                     name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
                     image: data.user.user_metadata?.avatar_url || null,
+                    username: data.user.user_metadata?.username || null
                 });
                 // Small delay to ensure auth state is settled before redirect
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -276,6 +321,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithCredentials,
         signUpWithPasskey,
         logout,
+        refreshUser,
     };
 
     return (

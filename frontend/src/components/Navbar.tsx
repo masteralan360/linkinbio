@@ -36,16 +36,25 @@ export default function Navbar() {
                                     Settings
                                 </Button>
                             </Link>
-                            <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                    {user.image && <AvatarImage src={user.image} alt={user.name || ""} />}
-                                    <AvatarFallback>
-                                        {user.name?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                            <div className="flex items-center gap-3 pl-2 border-l">
+                                <Avatar className="h-9 w-9 border shadow-sm">
+                                    {user.image ? (
+                                        <AvatarImage src={user.image} alt={user.name || ""} className="object-cover" />
+                                    ) : null}
+                                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                                        {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
-                                <span className="text-sm font-medium hidden sm:block">
-                                    {user.name || user.email}
-                                </span>
+                                <div className="hidden sm:flex flex-col">
+                                    <span className="text-sm font-semibold leading-none">
+                                        {user.name || "User"}
+                                    </span>
+                                    {user.username && (
+                                        <span className="text-xs text-muted-foreground leading-tight">
+                                            @{user.username}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <Button
                                 variant="ghost"
