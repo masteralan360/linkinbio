@@ -8,7 +8,6 @@ interface AuthUser {
     email: string;
     name: string | null;
     image: string | null;
-    username: string | null;
 }
 
 interface AuthContextType {
@@ -23,7 +22,6 @@ interface AuthContextType {
     loginWithCredentials: (email: string, password: string) => Promise<void>;
     signUpWithPasskey: (email: string, password: string, passkey: string, username: string) => Promise<void>;
     logout: () => Promise<void>;
-    refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -41,47 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isSigningUp, setIsSigningUp] = useState(false);
     const initRef = useRef(false);
     const mountedRef = useRef(true);
-
-    // Helper to fetch user profile data
-    const fetchUserProfile = async (userId: string, email: string) => {
-        try {
-            const { data: profile, error } = await supabase
-                .from("profiles")
-                .select("name, image, username")
-                .eq("id", userId)
-                .single();
-
-            if (error) {
-                console.error("Error fetching profile in useAuth:", error);
-                return {
-                    id: userId,
-                    email,
-                    name: 'User',
-                    image: null,
-                    username: null,
-                };
-            }
-
-            return {
-                id: userId,
-                email,
-                name: profile?.name || 'User',
-                image: profile?.image || null,
-                username: profile?.username || null,
-            };
-        } catch (err) {
-            console.error("Unexpected error fetching profile:", err);
-            return { id: userId, email, name: 'User', image: null, username: null };
-        }
-    };
-
-    const refreshProfile = async () => {
-        if (!user) return;
-        const profileData = await fetchUserProfile(user.id, user.email);
-        if (mountedRef.current) {
-            setUser(profileData);
-        }
-    };
 
     useEffect(() => {
         // Prevent double initialization
@@ -117,16 +74,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
 
                 if (session?.user && mountedRef.current) {
-                    const profileData = await fetchUserProfile(session.user.id, session.user.email || '');
-                    if (mountedRef.current) {
-                        setUser(profileData);
-                        setIsLoading(false);
-                    }
+                    setUser({
+                        id: session.user.id,
+                        email: session.user.email || '',
+                        name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
+                        image: session.user.user_metadata?.avatar_url || null,
+                    });
+                    setIsLoading(false);
                 } else if (mountedRef.current) {
                     setIsLoading(false);
                 }
             } catch (error) {
-                console.error("Error initAuth:", error);
+                console.error("Error getting session:", error);
                 if (mountedRef.current) setIsLoading(false);
             }
         };
@@ -140,10 +99,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!mountedRef.current) return;
 
             if (session?.user) {
-                const profileData = await fetchUserProfile(session.user.id, session.user.email || '');
-                if (mountedRef.current) {
-                    setUser(profileData);
-                }
+                setUser({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
+                    image: session.user.user_metadata?.avatar_url || null,
+                });
             } else {
                 setUser(null);
             }
@@ -223,7 +184,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (error) throw error;
 
             if (data.user) {
-                refreshProfile();
+                setUser({
+                    id: data.user.id,
+                    email: data.user.email || '',
+                    name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
+                    image: data.user.user_metadata?.avatar_url || null,
+                });
                 setLocation("/dashboard");
             }
         } catch (error) {
@@ -264,10 +230,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (error) throw error;
 
             if (data.user) {
-                const profileData = await fetchUserProfile(data.user.id, data.user.email || '');
-                if (mountedRef.current) {
-                    setUser(profileData);
-                }
+                setUser({
+                    id: data.user.id,
+                    email: data.user.email || '',
+                    name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
+                    image: data.user.user_metadata?.avatar_url || null,
+                });
                 // Small delay to ensure auth state is settled before redirect
                 await new Promise(resolve => setTimeout(resolve, 100));
                 // Redirect to profile maker
@@ -308,7 +276,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithCredentials,
         signUpWithPasskey,
         logout,
-        refreshProfile,
     };
 
     return (

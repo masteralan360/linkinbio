@@ -12,7 +12,7 @@ import { User, Mail, Lock, ShieldAlert, ArrowLeft, Loader2, Save, Trash2, CheckC
 
 export default function Settings() {
     const [, setLocation] = useLocation();
-    const { user, isAuthenticated, isLoading: authLoading, logout, refreshProfile } = useAuth();
+    const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
     const { toast } = useToast();
 
     // Data Loading
@@ -77,7 +77,6 @@ export default function Settings() {
         setSavingUsername(true);
         try {
             await settingsApi.updateUsername(username);
-            await refreshProfile();
             setOriginalUsername(username);
             toast({ title: "Success", description: "Username updated successfully." });
         } catch (error) {
@@ -99,7 +98,6 @@ export default function Settings() {
         setSavingEmail(true);
         try {
             await settingsApi.updateEmail(email);
-            await refreshProfile();
             toast({ title: "Check your email", description: "A confirmation link has been sent to your new address." });
         } catch (error) {
             toast({

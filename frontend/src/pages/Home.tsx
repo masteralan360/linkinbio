@@ -40,8 +40,8 @@ export default function Home() {
                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </Button>
                         </Link>
-                        {user && user.username && (
-                            <Link href={`/profile/${user.username}`}>
+                        {user && (
+                            <Link href={`/profile/${user.id}`}>
                                 <Button size="lg" variant="outline" className="gap-2">
                                     <Sparkles className="w-4 h-4" />
                                     View My Page
