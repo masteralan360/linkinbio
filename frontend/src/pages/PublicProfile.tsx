@@ -62,9 +62,9 @@ export default function PublicProfile() {
                 <div className="flex flex-col items-center gap-4 pt-4">
                     <div className="relative">
                         <div className="absolute inset-0 blur-3xl bg-primary/20 rounded-full scale-150" />
-                        <Avatar className="relative w-48 h-48 ring-4 ring-background shadow-2xl">
+                        <Avatar className="relative w-32 h-32 ring-4 ring-background shadow-2xl">
                             {user.image && <AvatarImage src={user.image} alt={user.name || ""} />}
-                            <AvatarFallback className="text-6xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
+                            <AvatarFallback className="text-4xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
                                 {user.name?.charAt(0) || "U"}
                             </AvatarFallback>
                         </Avatar>
