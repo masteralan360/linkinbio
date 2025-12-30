@@ -1,31 +1,11 @@
-import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { profileApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, Link2, LayoutDashboard, Settings } from "lucide-react";
 
 export default function Navbar() {
     const { user, isAuthenticated, logout, isLoggingOut } = useAuth();
-    const [profileName, setProfileName] = useState<string | null>(null);
-    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchProfile = async () => {
-            if (isAuthenticated && user) {
-                try {
-                    const profileData = await profileApi.get(user.id);
-                    setProfileName(profileData.user.name);
-                    setCurrentImageUrl(profileData.user.image);
-                } catch (error) {
-                    console.error("Error fetching navbar profile:", error);
-                }
-            }
-        };
-
-        fetchProfile();
-    }, [isAuthenticated, user]);
 
     return (
         <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -58,13 +38,13 @@ export default function Navbar() {
                             </Link>
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
-                                    {currentImageUrl && <AvatarImage src={currentImageUrl} alt={profileName || ""} />}
+                                    {user.image && <AvatarImage src={user.image} alt={user.name || ""} />}
                                     <AvatarFallback>
-                                        {(profileName || user.name)?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                                        {user.name?.charAt(0) || user.email.charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
                                 <span className="text-sm font-medium hidden sm:block">
-                                    {profileName || user.name || user.email}
+                                    {user.name || user.email}
                                 </span>
                             </div>
                             <Button
