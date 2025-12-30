@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, Link2, LayoutDashboard } from "lucide-react";
+import { LogOut, Link2, LayoutDashboard, Settings } from "lucide-react";
 
 export default function Navbar() {
     const { user, isAuthenticated, logout, isLoggingOut } = useAuth();
@@ -28,6 +28,12 @@ export default function Navbar() {
                                 <Button variant="ghost" size="sm" className="gap-2">
                                     <LayoutDashboard className="w-4 h-4" />
                                     Dashboard
+                                </Button>
+                            </Link>
+                            <Link href="/settings">
+                                <Button variant="ghost" size="sm" className="gap-2">
+                                    <Settings className="w-4 h-4" />
+                                    Settings
                                 </Button>
                             </Link>
                             <div className="flex items-center gap-3">

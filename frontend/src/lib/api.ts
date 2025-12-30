@@ -302,4 +302,42 @@ export const settingsApi = {
 
         return data?.value === passkey;
     },
+
+    // Update username
+    updateUsername: async (username: string): Promise<void> => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        // Update profile
+        const { error } = await supabase
+            .from("profiles")
+            .update({ username })
+            .eq("id", user.id);
+
+        if (error) {
+            if (error.code === '23505') {
+                throw new Error("This username is already taken. Please choose another.");
+            }
+            throw new Error(error.message);
+        }
+    },
+
+    // Update email
+    updateEmail: async (email: string): Promise<void> => {
+        const { error } = await supabase.auth.updateUser({ email });
+        if (error) throw new Error(error.message);
+    },
+
+    // Update password
+    updatePassword: async (password: string): Promise<void> => {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw new Error(error.message);
+    },
+
+    // Delete account
+    deleteAccount: async (): Promise<void> => {
+        const { error } = await supabase.rpc('delete_own_account');
+        if (error) throw new Error(error.message);
+        await supabase.auth.signOut();
+    }
 };
