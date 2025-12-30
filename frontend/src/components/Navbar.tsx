@@ -1,11 +1,31 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { profileApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, Link2, LayoutDashboard, Settings } from "lucide-react";
 
 export default function Navbar() {
     const { user, isAuthenticated, logout, isLoggingOut } = useAuth();
+    const [profileName, setProfileName] = useState<string | null>(null);
+    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            if (isAuthenticated && user) {
+                try {
+                    const profileData = await profileApi.get(user.id);
+                    setProfileName(profileData.user.name);
+                    setCurrentImageUrl(profileData.user.image);
+                } catch (error) {
+                    console.error("Error fetching navbar profile:", error);
+                }
+            }
+        };
+
+        fetchProfile();
+    }, [isAuthenticated, user]);
 
     return (
         <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -36,25 +56,16 @@ export default function Navbar() {
                                     Settings
                                 </Button>
                             </Link>
-                            <div className="flex items-center gap-3 pl-2 border-l">
-                                <Avatar className="h-9 w-9 border shadow-sm">
-                                    {user.image ? (
-                                        <AvatarImage src={user.image} alt={user.name || ""} className="object-cover" />
-                                    ) : null}
-                                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                                        {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
+                            <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                    {currentImageUrl && <AvatarImage src={currentImageUrl} alt={profileName || ""} />}
+                                    <AvatarFallback>
+                                        {(profileName || user.name)?.charAt(0) || user.email.charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
-                                <div className="hidden sm:flex flex-col">
-                                    <span className="text-sm font-semibold leading-none">
-                                        {user.name || "User"}
-                                    </span>
-                                    {user.username && (
-                                        <span className="text-xs text-muted-foreground leading-tight">
-                                            @{user.username}
-                                        </span>
-                                    )}
-                                </div>
+                                <span className="text-sm font-medium hidden sm:block">
+                                    {profileName || user.name || user.email}
+                                </span>
                             </div>
                             <Button
                                 variant="ghost"
