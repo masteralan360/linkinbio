@@ -160,7 +160,7 @@ function SortableLinkItem({
 export default function Dashboard() {
     const [, setLocation] = useLocation();
     const { toast } = useToast();
-    const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+    const { user, isAuthenticated, isLoading: authLoading, refreshProfile } = useAuth();
     const {
         links,
         isLoading,
@@ -348,6 +348,7 @@ export default function Dashboard() {
 
             // Update profile in database
             await profileApi.update({ image: newImageUrl });
+            await refreshProfile();
 
             // Delete old image after successful upload
             if (oldImageUrl && !oldImageUrl.includes('avatar')) {
@@ -382,6 +383,7 @@ export default function Dashboard() {
                 name: profileName.trim(),
                 bio: profileBio.trim() || null,
             });
+            await refreshProfile();
             setProfileSaveSuccess(true);
             setTimeout(() => setProfileSaveSuccess(false), 2000);
         } catch (err) {
