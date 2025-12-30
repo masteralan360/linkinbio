@@ -53,6 +53,8 @@ import {
     Camera,
     Loader2,
     Save,
+    Palette,
+    User,
 } from "lucide-react";
 import type { Link } from "@/lib/api";
 import { Textarea } from "@/components/ui/textarea";
@@ -172,6 +174,11 @@ export default function Dashboard() {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [editingLink, setEditingLink] = useState<Link | null>(null);
     const [copied, setCopied] = useState(false);
+
+    // Profile modal state
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+    // Profile picture state
 
     // Profile picture state
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -368,93 +375,141 @@ export default function Dashboard() {
 
     return (
         <div className="max-w-3xl mx-auto space-y-8">
-            {/* Profile Section */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Profile</CardTitle>
-                    <CardDescription>Edit your public profile information</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    {profileError && (
-                        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                            <p className="text-sm text-destructive">{profileError}</p>
+            {/* Main Navigation Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card
+                    className="cursor-pointer hover:border-primary/50 transition-colors group relative overflow-hidden"
+                    onClick={() => setIsProfileModalOpen(true)}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <CardContent className="flex items-center gap-4 p-6">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <User className="w-6 h-6" />
                         </div>
-                    )}
+                        <div>
+                            <h3 className="font-semibold text-lg">Edit Profile</h3>
+                            <p className="text-sm text-muted-foreground">Update your photo, name, and bio</p>
+                        </div>
+                    </CardContent>
+                </Card>
 
-                    {/* Avatar and basic info row */}
-                    <div className="flex items-start gap-6">
-                        <div
-                            className="relative cursor-pointer group flex-shrink-0"
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            <Avatar className="w-20 h-20 ring-2 ring-border">
-                                {(imagePreview || currentImageUrl) && (
-                                    <AvatarImage src={imagePreview || currentImageUrl || undefined} alt={user?.name || ""} />
-                                )}
-                                <AvatarFallback className="text-2xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
-                                    {profileName?.charAt(0) || user?.email?.charAt(0).toUpperCase() || "U"}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                {isUploadingImage ? (
-                                    <Loader2 className="w-6 h-6 text-white animate-spin" />
-                                ) : (
-                                    <Camera className="w-6 h-6 text-white" />
-                                )}
+                <div
+                    onClick={() => setLocation("/design")}
+                    className="cursor-pointer"
+                >
+                    <Card className="h-full hover:border-primary/50 transition-colors group relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <div className="w-12 h-12 rounded-full bg-pink-100 dark:bg-pink-900/20 flex items-center justify-center text-pink-500 group-hover:scale-110 transition-transform">
+                                <Palette className="w-6 h-6" />
                             </div>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageSelect}
-                                className="hidden"
-                                disabled={isUploadingImage}
-                            />
-                        </div>
-                        <div className="flex-1 space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="profileName">Display Name</Label>
-                                <Input
-                                    id="profileName"
-                                    value={profileName}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfileName(e.target.value)}
-                                    placeholder="Your name"
-                                    maxLength={50}
-                                />
+                            <div>
+                                <h3 className="font-semibold text-lg">Design Appearance</h3>
+                                <p className="text-sm text-muted-foreground">Customize colors, fonts, and themes</p>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="profileBio">Bio</Label>
-                                <Textarea
-                                    id="profileBio"
-                                    value={profileBio}
-                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setProfileBio(e.target.value)}
-                                    placeholder="Tell people about yourself..."
-                                    maxLength={160}
-                                    rows={2}
-                                    className="resize-none"
-                                />
-                                <p className="text-xs text-muted-foreground text-right">{profileBio.length}/160</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
+            {/* Profile Edit Modal */}
+            <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Edit Profile</DialogTitle>
+                        <DialogDescription>
+                            Update your public profile information
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6 py-4">
+                        {profileError && (
+                            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                                <p className="text-sm text-destructive">{profileError}</p>
                             </div>
-                            <Button
-                                onClick={handleSaveProfile}
-                                disabled={isSavingProfile}
-                                size="sm"
-                                className="gap-2"
+                        )}
+
+                        {/* Avatar and basic info row */}
+                        <div className="flex flex-col items-center gap-6">
+                            <div
+                                className="relative cursor-pointer group"
+                                onClick={() => fileInputRef.current?.click()}
                             >
-                                {isSavingProfile ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : profileSaveSuccess ? (
-                                    <Check className="w-4 h-4" />
-                                ) : (
-                                    <Save className="w-4 h-4" />
-                                )}
-                                {profileSaveSuccess ? "Saved!" : "Save Profile"}
-                            </Button>
+                                <Avatar className="w-24 h-24 ring-2 ring-border">
+                                    {(imagePreview || currentImageUrl) && (
+                                        <AvatarImage src={imagePreview || currentImageUrl || undefined} alt={user?.name || ""} />
+                                    )}
+                                    <AvatarFallback className="text-3xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
+                                        {profileName?.charAt(0) || user?.email?.charAt(0).toUpperCase() || "U"}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    {isUploadingImage ? (
+                                        <Loader2 className="w-8 h-8 text-white animate-spin" />
+                                    ) : (
+                                        <Camera className="w-8 h-8 text-white" />
+                                    )}
+                                </div>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageSelect}
+                                    className="hidden"
+                                    disabled={isUploadingImage}
+                                />
+                                <div className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground p-1.5 rounded-full border-2 border-background">
+                                    <Pencil className="w-3 h-3" />
+                                </div>
+                            </div>
+
+                            <div className="w-full space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="profileName">Display Name</Label>
+                                    <Input
+                                        id="profileName"
+                                        value={profileName}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfileName(e.target.value)}
+                                        placeholder="Your name"
+                                        maxLength={50}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="profileBio">Bio</Label>
+                                    <Textarea
+                                        id="profileBio"
+                                        value={profileBio}
+                                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setProfileBio(e.target.value)}
+                                        placeholder="Tell people about yourself..."
+                                        maxLength={160}
+                                        rows={3}
+                                        className="resize-none"
+                                    />
+                                    <p className="text-xs text-muted-foreground text-right">{profileBio.length}/160</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">Click avatar to change photo</p>
-                </CardContent>
-            </Card>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsProfileModalOpen(false)}>Cancel</Button>
+                        <Button
+                            onClick={handleSaveProfile}
+                            disabled={isSavingProfile}
+                            className="gap-2"
+                        >
+                            {isSavingProfile ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : profileSaveSuccess ? (
+                                <Check className="w-4 h-4" />
+                            ) : (
+                                <Save className="w-4 h-4" />
+                            )}
+                            {profileSaveSuccess ? "Saved!" : "Save Changes"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
