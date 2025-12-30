@@ -20,7 +20,7 @@ interface AuthContextType {
     loginWithGoogle: () => Promise<void>;
     loginWithGithub: () => Promise<void>;
     loginWithCredentials: (email: string, password: string) => Promise<void>;
-    signUpWithPasskey: (email: string, password: string, passkey: string) => Promise<void>;
+    signUpWithPasskey: (email: string, password: string, passkey: string, username: string) => Promise<void>;
     logout: () => Promise<void>;
 }
 
@@ -201,7 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const signUpWithPasskey = async (email: string, password: string, passkey: string) => {
+    const signUpWithPasskey = async (email: string, password: string, passkey: string, username: string) => {
         if (!isSupabaseConfigured) {
             throw new Error("Supabase is not configured. Please set environment variables.");
         }
@@ -221,6 +221,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 password,
                 options: {
                     emailRedirectTo: `${window.location.origin}/profile-maker`,
+                    data: {
+                        username: username,
+                    },
                 },
             });
 

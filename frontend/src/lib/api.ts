@@ -187,6 +187,7 @@ export interface ProfileData {
         name: string | null;
         image: string | null;
         bio: string | null;
+        username: string | null;
     };
     links: Link[];
 }
@@ -196,7 +197,7 @@ export const profileApi = {
         // Get user profile
         const { data: profile, error: profileError } = await supabase
             .from("profiles")
-            .select("id, name, image, bio")
+            .select("id, name, image, bio, username")
             .eq("id", userId)
             .single();
 
@@ -219,6 +220,40 @@ export const profileApi = {
                 name: profile.name,
                 image: profile.image,
                 bio: profile.bio || null,
+                username: profile.username || null,
+            },
+            links: (links || []).map(transformLink),
+        };
+    },
+
+    getByUsername: async (username: string): Promise<ProfileData> => {
+        // Get user profile by username
+        const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("id, name, image, bio, username")
+            .eq("username", username)
+            .single();
+
+        if (profileError) throw new Error(profileError.message);
+        if (!profile) throw new Error("User not found");
+
+        // Get public links using the fetched profile ID
+        const { data: links, error: linksError } = await supabase
+            .from("links")
+            .select("*")
+            .eq("user_id", profile.id)
+            .eq("is_public", true)
+            .order("position", { ascending: true });
+
+        if (linksError) throw new Error(linksError.message);
+
+        return {
+            user: {
+                id: profile.id,
+                name: profile.name,
+                image: profile.image,
+                bio: profile.bio || null,
+                username: profile.username,
             },
             links: (links || []).map(transformLink),
         };

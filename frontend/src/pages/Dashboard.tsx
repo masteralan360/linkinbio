@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useLinks } from "@/hooks/useLinks";
+import { useToast } from "@/hooks/use-toast";
 import { profileApi } from "@/lib/api";
 import { compressImage, uploadProfileImage, deleteProfileImage, createPreviewUrl, revokePreviewUrl } from "@/lib/imageUtils";
 import { Button } from "@/components/ui/button";
@@ -158,6 +159,7 @@ function SortableLinkItem({
 
 export default function Dashboard() {
     const [, setLocation] = useLocation();
+    const { toast } = useToast();
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
     const {
         links,
@@ -189,6 +191,7 @@ export default function Dashboard() {
     // Profile editing state
     const [profileName, setProfileName] = useState("");
     const [profileBio, setProfileBio] = useState("");
+    const [profileUsername, setProfileUsername] = useState<string | null>(null);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
     const [profileError, setProfileError] = useState<string | null>(null);
@@ -210,6 +213,7 @@ export default function Dashboard() {
                     setCurrentImageUrl(profileData.user.image || null);
                     setProfileName(profileData.user.name || "");
                     setProfileBio(profileData.user.bio || "");
+                    setProfileUsername(profileData.user.username || null);
                 } catch (error) {
                     console.error("Error fetching profile:", error);
                     // Fallback to auth user data if fetch fails
@@ -286,12 +290,27 @@ export default function Dashboard() {
         setEditingLink(null);
     };
 
-    const handleCopyProfileUrl = () => {
-        if (!user) return;
-        const url = `${window.location.origin}/profile/${user.id}`;
-        navigator.clipboard.writeText(url);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+    const handleCopyProfileUrl = async () => {
+        const identifier = profileUsername || user?.id;
+        if (!identifier) return;
+
+        const url = `${window.location.origin}/profile/${identifier}`;
+        try {
+            await navigator.clipboard.writeText(url);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+            toast({
+                title: "Copied!",
+                description: "Profile URL copied to clipboard",
+            });
+        } catch (err) {
+            console.error("Failed to copy:", err);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to copy URL",
+            });
+        }
     };
 
     // Profile picture handlers

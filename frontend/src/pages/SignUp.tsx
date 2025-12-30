@@ -12,6 +12,7 @@ export default function SignUp() {
     const { isAuthenticated, signUpWithPasskey, isSigningUp } = useAuth();
 
     const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [passkey, setPasskey] = useState("");
@@ -41,8 +42,15 @@ export default function SignUp() {
             return;
         }
 
+        // Validate username
+        const usernameRegex = /^[a-z][a-z0-9-]{2,19}$/;
+        if (!usernameRegex.test(username)) {
+            setSignUpError("Username must start with a lowercase letter, contain only a-z 0-9 and hyphens, and be 3-20 characters long.");
+            return;
+        }
+
         try {
-            await signUpWithPasskey(email, password, passkey);
+            await signUpWithPasskey(email, password, passkey, username);
         } catch (err) {
             setSignUpError(err instanceof Error ? err.message : "Sign up failed");
         }
@@ -69,6 +77,22 @@ export default function SignUp() {
                     )}
 
                     <form onSubmit={handleSignUp} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="username">Username</Label>
+                            <Input
+                                id="username"
+                                type="text"
+                                placeholder="username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                                required
+                                minLength={3}
+                                maxLength={20}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                3-20 characters, lowercase letters, numbers, and hyphens only.
+                            </p>
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
                             <Input

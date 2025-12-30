@@ -6,17 +6,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, Link2, AlertCircle } from "lucide-react";
 
 export default function PublicProfile() {
-    const [, params] = useRoute("/profile/:userId");
-    const userId = params?.userId;
+    const [, params] = useRoute("/profile/:username");
+    const username = params?.username;
 
     const {
         data: profile,
         isLoading,
         error,
     } = useQuery({
-        queryKey: ["profile", userId],
-        queryFn: () => profileApi.get(userId!),
-        enabled: !!userId,
+        queryKey: ["profile", username],
+        queryFn: () => profileApi.getByUsername(username!),
+        enabled: !!username,
     });
 
     if (isLoading) {
