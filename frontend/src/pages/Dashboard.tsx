@@ -187,12 +187,25 @@ export default function Dashboard() {
     const [profileError, setProfileError] = useState<string | null>(null);
 
     // Sync user data when it loads
+    // Sync user data when it loads
     useEffect(() => {
-        if (user) {
-            setCurrentImageUrl(user.image || null);
-            setProfileName(user.name || "");
-            // Note: bio comes from profile, not auth user - would need to fetch
-        }
+        const fetchProfileData = async () => {
+            if (user) {
+                try {
+                    const profileData = await profileApi.get(user.id);
+                    setCurrentImageUrl(profileData.user.image || null);
+                    setProfileName(profileData.user.name || "");
+                    setProfileBio(profileData.user.bio || "");
+                } catch (error) {
+                    console.error("Error fetching profile:", error);
+                    // Fallback to auth user data if fetch fails
+                    setCurrentImageUrl(user.image || null);
+                    setProfileName(user.name || "");
+                }
+            }
+        };
+
+        fetchProfileData();
     }, [user]);
 
     const sensors = useSensors(
