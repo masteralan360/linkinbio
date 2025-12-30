@@ -1,10 +1,28 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { profileApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Link2, ArrowRight, Sparkles, UserPlus } from "lucide-react";
 
 export default function Home() {
     const { isAuthenticated, user } = useAuth();
+    const [username, setUsername] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchUsername = async () => {
+            if (isAuthenticated && user) {
+                try {
+                    const profileData = await profileApi.get(user.id);
+                    setUsername(profileData.user.username);
+                } catch (error) {
+                    console.error("Error fetching profile username:", error);
+                }
+            }
+        };
+
+        fetchUsername();
+    }, [isAuthenticated, user]);
 
     return (
         <div className="min-h-[calc(100vh-12rem)] flex flex-col items-center justify-center text-center px-4">
@@ -41,7 +59,7 @@ export default function Home() {
                             </Button>
                         </Link>
                         {user && (
-                            <Link href={`/profile/${user.id}`}>
+                            <Link href={`/profile/${username || user.id}`}>
                                 <Button size="lg" variant="outline" className="gap-2">
                                     <Sparkles className="w-4 h-4" />
                                     View My Page
