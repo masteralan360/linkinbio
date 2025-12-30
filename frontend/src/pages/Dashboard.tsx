@@ -375,6 +375,29 @@ export default function Dashboard() {
 
     return (
         <div className="max-w-3xl mx-auto space-y-8">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold">Dashboard</h1>
+                    <p className="text-muted-foreground">
+                        Manage your links and profile appearance.
+                    </p>
+                </div>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyProfileUrl}
+                    className="gap-2"
+                >
+                    {copied ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                    ) : (
+                        <Copy className="w-4 h-4" />
+                    )}
+                    Copy Profile URL
+                </Button>
+            </div>
+
             {/* Main Navigation Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card
@@ -521,19 +544,6 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopyProfileUrl}
-                        className="gap-2"
-                    >
-                        {copied ? (
-                            <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                            <Copy className="w-4 h-4" />
-                        )}
-                        Copy Profile URL
-                    </Button>
 
                     <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                         <DialogTrigger asChild>
