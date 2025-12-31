@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { profileApi, defaultTheme, ThemeConfig } from "@/lib/api";
@@ -69,27 +69,81 @@ export default function Design() {
     };
 
     // Helper for Color Input
-    const ColorPicker = ({ label, value, onChange }: { label: string, value: string, onChange: (val: string) => void }) => (
-        <div className="space-y-2">
-            <Label>{label}</Label>
-            <div className="flex gap-2 items-center">
-                <div className="relative w-10 h-10 rounded-md overflow-hidden border">
-                    <input
-                        type="color"
-                        value={value}
-                        onChange={(e) => onChange(e.target.value)}
-                        className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer p-0 border-0"
+    const ColorPicker = ({ label, value, onChange }: { label: string, value: string, onChange: (val: string) => void }) => {
+        const inputRef = useRef<HTMLInputElement>(null);
+        const [localValue, setLocalValue] = useState(value);
+        
+        // Sync local value with prop value when it changes externally
+        useEffect(() => {
+            setLocalValue(value);
+        }, [value]);
+        
+        const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const newValue = e.target.value;
+            setLocalValue(newValue);
+            // Only update parent if it's a valid hex color format
+            if (/^#?[0-9A-Fa-f]{0,6}$/.test(newValue)) {
+                const formattedValue = newValue.startsWith('#') ? newValue : `#${newValue}`;
+                if (formattedValue.length === 7 || formattedValue.length === 4) {
+                    onChange(formattedValue);
+                }
+            }
+        };
+        
+        const handleInputBlur = () => {
+            // Validate and format on blur
+            let formatted = localValue.trim();
+            if (!formatted.startsWith('#')) {
+                formatted = `#${formatted}`;
+            }
+            // Ensure it's a valid hex color
+            if (/^#[0-9A-Fa-f]{6}$/.test(formatted)) {
+                onChange(formatted);
+                setLocalValue(formatted);
+            } else if (/^#[0-9A-Fa-f]{3}$/.test(formatted)) {
+                // Expand 3-digit hex to 6-digit
+                const expanded = `#${formatted[1]}${formatted[1]}${formatted[2]}${formatted[2]}${formatted[3]}${formatted[3]}`;
+                onChange(expanded);
+                setLocalValue(expanded);
+            } else {
+                // Reset to original value if invalid
+                setLocalValue(value);
+            }
+        };
+        
+        return (
+            <div className="space-y-2">
+                <Label>{label}</Label>
+                <div className="flex gap-2 items-center">
+                    <div className="relative w-10 h-10 rounded-md overflow-hidden border-2 border-border cursor-pointer hover:border-primary/50 transition-colors">
+                        <input
+                            type="color"
+                            value={value}
+                            onChange={(e) => onChange(e.target.value)}
+                            className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
+                            onInput={(e) => {
+                                // Keep the color picker open while dragging
+                                e.stopPropagation();
+                            }}
+                        />
+                        <div 
+                            className="absolute inset-0 pointer-events-none"
+                            style={{ backgroundColor: value }}
+                        />
+                    </div>
+                    <Input
+                        ref={inputRef}
+                        value={localValue}
+                        onChange={handleInputChange}
+                        onBlur={handleInputBlur}
+                        className="font-mono uppercase"
+                        maxLength={7}
+                        placeholder="#000000"
                     />
                 </div>
-                <Input
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    className="font-mono uppercase"
-                    maxLength={7}
-                />
             </div>
-        </div>
-    );
+        );
+    };
 
     if (authLoading || loading) {
         return (
@@ -241,6 +295,92 @@ export default function Design() {
                                             {align}
                                         </Button>
                                     ))}
+                                </div>
+                            </div>
+
+                            <div className="pt-2">
+                                <Label className="mb-2 block">Button Height: {theme.buttonHeight ?? 8}</Label>
+                                <div className="flex items-center gap-4">
+                                    <Input
+                                        type="range"
+                                        min="0"
+                                        max="20"
+                                        value={theme.buttonHeight ?? 8}
+                                        onChange={(e) => setTheme({ ...theme, buttonHeight: parseInt(e.target.value) })}
+                                        className="flex-1"
+                                    />
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        max="20"
+                                        value={theme.buttonHeight ?? 8}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            const clamped = Math.max(0, Math.min(20, val));
+                                            setTheme({ ...theme, buttonHeight: clamped });
+                                        }}
+                                        className="w-20"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-2">
+                                <Label className="mb-2 block">Button Border Radius: {theme.buttonBorderRadius ?? 5}</Label>
+                                <div className="flex items-center gap-4">
+                                    <Input
+                                        type="range"
+                                        min="0"
+                                        max="20"
+                                        value={theme.buttonBorderRadius ?? 5}
+                                        onChange={(e) => setTheme({ ...theme, buttonBorderRadius: parseInt(e.target.value) })}
+                                        className="flex-1"
+                                    />
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        max="20"
+                                        value={theme.buttonBorderRadius ?? 5}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            const clamped = Math.max(0, Math.min(20, val));
+                                            setTheme({ ...theme, buttonBorderRadius: clamped });
+                                        }}
+                                        className="w-20"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t space-y-4">
+                                <ColorPicker
+                                    label="Left Icon Color"
+                                    value={theme.leftIconColor ?? '#9333ea'}
+                                    onChange={(v) => setTheme({ ...theme, leftIconColor: v })}
+                                />
+                                
+                                <div className="pt-2">
+                                    <Label className="mb-2 block">Icon Size: {theme.iconSize ?? 15}</Label>
+                                    <div className="flex items-center gap-4">
+                                        <Input
+                                            type="range"
+                                            min="0"
+                                            max="20"
+                                            value={theme.iconSize ?? 15}
+                                            onChange={(e) => setTheme({ ...theme, iconSize: parseInt(e.target.value) })}
+                                            className="flex-1"
+                                        />
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            max="20"
+                                            value={theme.iconSize ?? 15}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                const clamped = Math.max(0, Math.min(20, val));
+                                                setTheme({ ...theme, iconSize: clamped });
+                                            }}
+                                            className="w-20"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>

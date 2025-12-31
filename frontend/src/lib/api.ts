@@ -191,6 +191,10 @@ export interface ThemeConfig {
     linksTitleColor: string;
     buttonColor: string;
     linksAlignment: 'left' | 'center' | 'right';
+    buttonHeight: number;
+    buttonBorderRadius: number;
+    leftIconColor: string;
+    iconSize: number;
 }
 
 export const defaultTheme: ThemeConfig = {
@@ -204,6 +208,10 @@ export const defaultTheme: ThemeConfig = {
     linksTitleColor: '#000000',
     buttonColor: '#ffffff',
     linksAlignment: 'center',
+    buttonHeight: 8,
+    buttonBorderRadius: 5,
+    leftIconColor: '#9333ea',
+    iconSize: 15,
 };
 
 // Profile API using Supabase

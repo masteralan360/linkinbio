@@ -1,7 +1,51 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link2, ExternalLink } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { ThemeConfig, defaultTheme, Link as AppLink } from "@/lib/api";
+import { 
+    FaTiktok, 
+    FaSnapchat, 
+    FaWhatsapp, 
+    FaInstagram, 
+    FaTwitter, 
+    FaFacebook, 
+    FaYoutube, 
+    FaLinkedin, 
+    FaGithub, 
+    FaDiscord,
+    FaTelegram,
+    FaReddit,
+    FaPinterest,
+    FaSpotify,
+    FaApple,
+    FaGoogle,
+    FaAmazon,
+    FaPaypal,
+    FaEbay,
+    FaShopify,
+    FaEtsy,
+    FaTwitch,
+    FaSoundcloud,
+    FaBandcamp,
+    FaPatreon,
+    FaMedium,
+    FaBehance,
+    FaDribbble,
+    FaSkype,
+    FaVimeo,
+    FaTumblr,
+    FaWordpress,
+    FaYelp,
+    FaAirbnb,
+    FaUber,
+    FaDropbox,
+    FaGoogleDrive,
+    FaSlack,
+    FaMicrosoft,
+} from "react-icons/fa";
+import { SiOnlyfans, SiFigma, SiViber } from "react-icons/si";
+import { MdPhone } from "react-icons/md";
+import type { IconType } from "react-icons";
 
 interface ProfilePreviewProps {
     user: {
@@ -11,6 +55,143 @@ interface ProfilePreviewProps {
     };
     links: AppLink[];
     theme?: ThemeConfig;
+}
+
+// Function to detect platform from URL and return appropriate icon
+function getPlatformIcon(url: string): IconType {
+    const lowerUrl = url.toLowerCase();
+    
+    // Phone (tel:)
+    if (lowerUrl.startsWith('tel:')) return MdPhone;
+    
+    // Viber (viber://)
+    if (lowerUrl.startsWith('viber://')) return SiViber;
+    
+    // TikTok
+    if (lowerUrl.includes('tiktok.com')) return FaTiktok;
+    
+    // Snapchat
+    if (lowerUrl.includes('snapchat.com')) return FaSnapchat;
+    
+    // WhatsApp
+    if (lowerUrl.includes('wa.me') || lowerUrl.includes('whatsapp.com') || lowerUrl.includes('api.whatsapp.com')) return FaWhatsapp;
+    
+    // Instagram
+    if (lowerUrl.includes('instagram.com')) return FaInstagram;
+    
+    // Twitter/X
+    if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) return FaTwitter;
+    
+    // Facebook
+    if (lowerUrl.includes('facebook.com') || lowerUrl.includes('fb.com')) return FaFacebook;
+    
+    // YouTube
+    if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return FaYoutube;
+    
+    // LinkedIn
+    if (lowerUrl.includes('linkedin.com')) return FaLinkedin;
+    
+    // GitHub
+    if (lowerUrl.includes('github.com')) return FaGithub;
+    
+    // Discord
+    if (lowerUrl.includes('discord.com') || lowerUrl.includes('discord.gg')) return FaDiscord;
+    
+    // Telegram
+    if (lowerUrl.includes('t.me') || lowerUrl.includes('telegram.org')) return FaTelegram;
+    
+    // Reddit
+    if (lowerUrl.includes('reddit.com')) return FaReddit;
+    
+    // Pinterest
+    if (lowerUrl.includes('pinterest.com')) return FaPinterest;
+    
+    // Spotify
+    if (lowerUrl.includes('spotify.com') || lowerUrl.includes('open.spotify.com')) return FaSpotify;
+    
+    // Apple
+    if (lowerUrl.includes('apple.com') || lowerUrl.includes('itunes.apple.com') || lowerUrl.includes('apps.apple.com')) return FaApple;
+    
+    // Google
+    if (lowerUrl.includes('google.com') || lowerUrl.includes('goo.gl')) return FaGoogle;
+    
+    // Amazon
+    if (lowerUrl.includes('amazon.com') || lowerUrl.includes('amazon.co.uk') || lowerUrl.includes('amazon.de')) return FaAmazon;
+    
+    // PayPal
+    if (lowerUrl.includes('paypal.com')) return FaPaypal;
+    
+    // eBay
+    if (lowerUrl.includes('ebay.com')) return FaEbay;
+    
+    // Shopify
+    if (lowerUrl.includes('shopify.com') || lowerUrl.includes('.myshopify.com')) return FaShopify;
+    
+    // Etsy
+    if (lowerUrl.includes('etsy.com')) return FaEtsy;
+    
+    // Twitch
+    if (lowerUrl.includes('twitch.tv')) return FaTwitch;
+    
+    // SoundCloud
+    if (lowerUrl.includes('soundcloud.com')) return FaSoundcloud;
+    
+    // Bandcamp
+    if (lowerUrl.includes('bandcamp.com')) return FaBandcamp;
+    
+    // Patreon
+    if (lowerUrl.includes('patreon.com')) return FaPatreon;
+    
+    // Medium
+    if (lowerUrl.includes('medium.com')) return FaMedium;
+    
+    // Behance
+    if (lowerUrl.includes('behance.net')) return FaBehance;
+    
+    // Dribbble
+    if (lowerUrl.includes('dribbble.com')) return FaDribbble;
+    
+    // Figma
+    if (lowerUrl.includes('figma.com')) return SiFigma;
+    
+    // Skype
+    if (lowerUrl.includes('skype.com')) return FaSkype;
+    
+    // Vimeo
+    if (lowerUrl.includes('vimeo.com')) return FaVimeo;
+    
+    // Tumblr
+    if (lowerUrl.includes('tumblr.com')) return FaTumblr;
+    
+    // WordPress
+    if (lowerUrl.includes('wordpress.com')) return FaWordpress;
+    
+    // Yelp
+    if (lowerUrl.includes('yelp.com')) return FaYelp;
+    
+    // Airbnb
+    if (lowerUrl.includes('airbnb.com')) return FaAirbnb;
+    
+    // Uber
+    if (lowerUrl.includes('uber.com')) return FaUber;
+    
+    // Dropbox
+    if (lowerUrl.includes('dropbox.com')) return FaDropbox;
+    
+    // Google Drive
+    if (lowerUrl.includes('drive.google.com')) return FaGoogleDrive;
+    
+    // Slack
+    if (lowerUrl.includes('slack.com')) return FaSlack;
+    
+    // Microsoft
+    if (lowerUrl.includes('microsoft.com') || lowerUrl.includes('office.com')) return FaMicrosoft;
+    
+    // OnlyFans
+    if (lowerUrl.includes('onlyfans.com')) return SiOnlyfans;
+    
+    // Default: generic link icon
+    return Link2;
 }
 
 export default function ProfilePreview({ user, links, theme = defaultTheme }: ProfilePreviewProps) {
@@ -67,28 +248,37 @@ export default function ProfilePreview({ user, links, theme = defaultTheme }: Pr
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {links.map((link) => (
                             <a
                                 key={link.id}
                                 href={link.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="group block transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                                className="group block transition-transform hover:scale-[1.01] active:scale-[0.99]"
                             >
                                 <div
-                                    className="relative p-4 rounded-xl shadow-sm border border-transparent hover:border-primary/20 hover:shadow-md transition-all bg-white"
+                                    className="relative w-full shadow-md hover:shadow-lg transition-all flex items-center px-4"
                                     style={{
-                                        // We override background only if theme demands, but user asked for "old design" which had white cards usually?
-                                        // The user said "change the buttons color", so we use that.
                                         backgroundColor: theme.buttonColor,
                                         color: theme.linksTitleColor,
+                                        height: `${(theme.buttonHeight ?? 8) * 0.4375}rem`, // Convert scale (0-20) to rem, where 8 = 3.5rem (current h-14)
+                                        borderRadius: `${(theme.buttonBorderRadius ?? 5) * 0.1}rem`, // Convert scale (0-20) to rem, where 5 = 0.5rem (current rounded-lg)
                                     }}
                                 >
-                                    <div className="flex items-center justify-between">
-                                        {/* Left Icon (Fixed) */}
-                                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 mr-3">
-                                            <Link2 className="w-5 h-5" />
+                                    <div className="flex items-center w-full">
+                                        {/* Left Icon (Dynamic based on URL) */}
+                                        <div 
+                                            className="flex-shrink-0 w-10 h-10 flex items-center justify-center mr-3"
+                                            style={{
+                                                color: theme.leftIconColor ?? '#9333ea',
+                                            }}
+                                        >
+                                            {(() => {
+                                                const IconComponent = getPlatformIcon(link.url);
+                                                const iconSize = (theme.iconSize ?? 15) * 0.125; // Convert scale (0-20) to rem, where 15 = 1.875rem (1.5x of original 1.25rem)
+                                                return <IconComponent style={{ width: `${iconSize}rem`, height: `${iconSize}rem` }} />;
+                                            })()}
                                         </div>
 
                                         {/* Text Container (Flex grow with alignment) */}
@@ -96,14 +286,9 @@ export default function ProfilePreview({ user, links, theme = defaultTheme }: Pr
                                             className="flex-grow min-w-0 mx-2"
                                             style={{ textAlign: theme.linksAlignment as any }}
                                         >
-                                            <span className="font-medium truncate block text-lg">
+                                            <span className="font-medium truncate block text-base">
                                                 {link.title}
                                             </span>
-                                        </div>
-
-                                        {/* Right Icon (Fixed) */}
-                                        <div className="flex-shrink-0 ml-3 text-muted-foreground/50 group-hover:text-purple-600 transition-colors">
-                                            <ExternalLink className="w-5 h-5" />
                                         </div>
                                     </div>
                                 </div>
