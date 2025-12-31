@@ -1,11 +1,41 @@
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { profileApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, Link2, LayoutDashboard, Settings } from "lucide-react";
 
 export default function Navbar() {
     const { user, isAuthenticated, logout, isLoggingOut } = useAuth();
+    const [displayName, setDisplayName] = useState<string | null>(null);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadProfileName = async () => {
+            if (!user) {
+                if (isMounted) setDisplayName(null);
+                return;
+            }
+
+            try {
+                const profile = await profileApi.get(user.id);
+                if (isMounted) {
+                    setDisplayName(profile.user.name ?? null);
+                }
+            } catch (err) {
+                console.error("Failed to load profile for navbar:", err);
+                if (isMounted) setDisplayName(null);
+            }
+        };
+
+        loadProfileName();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [user?.id]);
 
     return (
         <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -38,13 +68,13 @@ export default function Navbar() {
                             </Link>
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
-                                    {user.image && <AvatarImage src={user.image} alt={user.name || ""} />}
+                                    {user.image && <AvatarImage src={user.image} alt={displayName || ""} />}
                                     <AvatarFallback>
-                                        {user.name?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                                        {displayName?.charAt(0) || user.email.charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
                                 <span className="text-sm font-medium hidden sm:block">
-                                    {user.name || user.email}
+                                    {displayName ?? null}
                                 </span>
                             </div>
                             <Button
