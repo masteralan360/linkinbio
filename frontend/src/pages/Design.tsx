@@ -72,12 +72,12 @@ export default function Design() {
     const ColorPicker = ({ label, value, onChange }: { label: string, value: string, onChange: (val: string) => void }) => {
         const inputRef = useRef<HTMLInputElement>(null);
         const [localValue, setLocalValue] = useState(value);
-        
+
         // Sync local value with prop value when it changes externally
         useEffect(() => {
             setLocalValue(value);
         }, [value]);
-        
+
         const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             const newValue = e.target.value;
             setLocalValue(newValue);
@@ -89,7 +89,7 @@ export default function Design() {
                 }
             }
         };
-        
+
         const handleInputBlur = () => {
             // Validate and format on blur
             let formatted = localValue.trim();
@@ -110,7 +110,7 @@ export default function Design() {
                 setLocalValue(value);
             }
         };
-        
+
         return (
             <div className="space-y-2">
                 <Label>{label}</Label>
@@ -126,7 +126,7 @@ export default function Design() {
                                 e.stopPropagation();
                             }}
                         />
-                        <div 
+                        <div
                             className="absolute inset-0 pointer-events-none"
                             style={{ backgroundColor: value }}
                         />
@@ -356,7 +356,7 @@ export default function Design() {
                                     value={theme.leftIconColor ?? '#9333ea'}
                                     onChange={(v) => setTheme({ ...theme, leftIconColor: v })}
                                 />
-                                
+
                                 <div className="pt-2">
                                     <Label className="mb-2 block">Icon Size: {theme.iconSize ?? 15}</Label>
                                     <div className="flex items-center gap-4">

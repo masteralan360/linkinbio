@@ -11,6 +11,7 @@ import ProfileMaker from "@/pages/ProfileMaker";
 import PublicProfile from "@/pages/PublicProfile";
 import Design from "@/pages/Design";
 import Settings from "@/pages/Settings";
+import Admin from "@/pages/Admin";
 import Home from "@/pages/Home";
 
 function AppContent() {
@@ -29,6 +30,7 @@ function AppContent() {
                     <Route path="/profile-maker" component={ProfileMaker} />
                     <Route path="/design" component={Design} />
                     <Route path="/settings" component={Settings} />
+                    <Route path="/admin" component={Admin} />
                     <Route path="/profile/:slug" component={PublicProfile} />
                     <Route>
                         <div className="text-center py-20">

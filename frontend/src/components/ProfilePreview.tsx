@@ -2,16 +2,16 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link2 } from "lucide-react";
 import { ThemeConfig, defaultTheme, Link as AppLink } from "@/lib/api";
-import { 
-    FaTiktok, 
-    FaSnapchat, 
-    FaWhatsapp, 
-    FaInstagram, 
-    FaTwitter, 
-    FaFacebook, 
-    FaYoutube, 
-    FaLinkedin, 
-    FaGithub, 
+import {
+    FaTiktok,
+    FaSnapchat,
+    FaWhatsapp,
+    FaInstagram,
+    FaTwitter,
+    FaFacebook,
+    FaYoutube,
+    FaLinkedin,
+    FaGithub,
     FaDiscord,
     FaTelegram,
     FaReddit,
@@ -60,136 +60,136 @@ interface ProfilePreviewProps {
 // Function to detect platform from URL and return appropriate icon
 function getPlatformIcon(url: string): IconType {
     const lowerUrl = url.toLowerCase();
-    
+
     // Phone (tel:)
     if (lowerUrl.startsWith('tel:')) return MdPhone;
-    
+
     // Viber (viber://)
     if (lowerUrl.startsWith('viber://')) return SiViber;
-    
+
     // TikTok
     if (lowerUrl.includes('tiktok.com')) return FaTiktok;
-    
+
     // Snapchat
     if (lowerUrl.includes('snapchat.com')) return FaSnapchat;
-    
+
     // WhatsApp
     if (lowerUrl.includes('wa.me') || lowerUrl.includes('whatsapp.com') || lowerUrl.includes('api.whatsapp.com')) return FaWhatsapp;
-    
+
     // Instagram
     if (lowerUrl.includes('instagram.com')) return FaInstagram;
-    
+
     // Twitter/X
     if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) return FaTwitter;
-    
+
     // Facebook
     if (lowerUrl.includes('facebook.com') || lowerUrl.includes('fb.com')) return FaFacebook;
-    
+
     // YouTube
     if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return FaYoutube;
-    
+
     // LinkedIn
     if (lowerUrl.includes('linkedin.com')) return FaLinkedin;
-    
+
     // GitHub
     if (lowerUrl.includes('github.com')) return FaGithub;
-    
+
     // Discord
     if (lowerUrl.includes('discord.com') || lowerUrl.includes('discord.gg')) return FaDiscord;
-    
+
     // Telegram
     if (lowerUrl.includes('t.me') || lowerUrl.includes('telegram.org')) return FaTelegram;
-    
+
     // Reddit
     if (lowerUrl.includes('reddit.com')) return FaReddit;
-    
+
     // Pinterest
     if (lowerUrl.includes('pinterest.com')) return FaPinterest;
-    
+
     // Spotify
     if (lowerUrl.includes('spotify.com') || lowerUrl.includes('open.spotify.com')) return FaSpotify;
-    
+
     // Apple
     if (lowerUrl.includes('apple.com') || lowerUrl.includes('itunes.apple.com') || lowerUrl.includes('apps.apple.com')) return FaApple;
-    
+
     // Google
     if (lowerUrl.includes('google.com') || lowerUrl.includes('goo.gl')) return FaGoogle;
-    
+
     // Amazon
     if (lowerUrl.includes('amazon.com') || lowerUrl.includes('amazon.co.uk') || lowerUrl.includes('amazon.de')) return FaAmazon;
-    
+
     // PayPal
     if (lowerUrl.includes('paypal.com')) return FaPaypal;
-    
+
     // eBay
     if (lowerUrl.includes('ebay.com')) return FaEbay;
-    
+
     // Shopify
     if (lowerUrl.includes('shopify.com') || lowerUrl.includes('.myshopify.com')) return FaShopify;
-    
+
     // Etsy
     if (lowerUrl.includes('etsy.com')) return FaEtsy;
-    
+
     // Twitch
     if (lowerUrl.includes('twitch.tv')) return FaTwitch;
-    
+
     // SoundCloud
     if (lowerUrl.includes('soundcloud.com')) return FaSoundcloud;
-    
+
     // Bandcamp
     if (lowerUrl.includes('bandcamp.com')) return FaBandcamp;
-    
+
     // Patreon
     if (lowerUrl.includes('patreon.com')) return FaPatreon;
-    
+
     // Medium
     if (lowerUrl.includes('medium.com')) return FaMedium;
-    
+
     // Behance
     if (lowerUrl.includes('behance.net')) return FaBehance;
-    
+
     // Dribbble
     if (lowerUrl.includes('dribbble.com')) return FaDribbble;
-    
+
     // Figma
     if (lowerUrl.includes('figma.com')) return SiFigma;
-    
+
     // Skype
     if (lowerUrl.includes('skype.com')) return FaSkype;
-    
+
     // Vimeo
     if (lowerUrl.includes('vimeo.com')) return FaVimeo;
-    
+
     // Tumblr
     if (lowerUrl.includes('tumblr.com')) return FaTumblr;
-    
+
     // WordPress
     if (lowerUrl.includes('wordpress.com')) return FaWordpress;
-    
+
     // Yelp
     if (lowerUrl.includes('yelp.com')) return FaYelp;
-    
+
     // Airbnb
     if (lowerUrl.includes('airbnb.com')) return FaAirbnb;
-    
+
     // Uber
     if (lowerUrl.includes('uber.com')) return FaUber;
-    
+
     // Dropbox
     if (lowerUrl.includes('dropbox.com')) return FaDropbox;
-    
+
     // Google Drive
     if (lowerUrl.includes('drive.google.com')) return FaGoogleDrive;
-    
+
     // Slack
     if (lowerUrl.includes('slack.com')) return FaSlack;
-    
+
     // Microsoft
     if (lowerUrl.includes('microsoft.com') || lowerUrl.includes('office.com')) return FaMicrosoft;
-    
+
     // OnlyFans
     if (lowerUrl.includes('onlyfans.com')) return SiOnlyfans;
-    
+
     // Default: generic link icon
     return Link2;
 }
@@ -268,7 +268,7 @@ export default function ProfilePreview({ user, links, theme = defaultTheme }: Pr
                                 >
                                     <div className="flex items-center w-full">
                                         {/* Left Icon (Dynamic based on URL) */}
-                                        <div 
+                                        <div
                                             className="flex-shrink-0 w-10 h-10 flex items-center justify-center mr-3"
                                             style={{
                                                 color: theme.leftIconColor ?? '#9333ea',

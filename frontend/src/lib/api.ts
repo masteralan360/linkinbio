@@ -1,4 +1,5 @@
 import { supabase, type Link as DbLink, type Profile } from "./supabase";
+export type { Profile };
 
 // Link interface for frontend (camelCase)
 export interface Link {
@@ -335,6 +336,21 @@ export const settingsApi = {
         return data?.value === passkey;
     },
 
+    validateAdminPasskey: async (passkey: string): Promise<boolean> => {
+        const { data, error } = await supabase
+            .from("app_settings")
+            .select("value")
+            .eq("key", "admin_passkey")
+            .single();
+
+        if (error) {
+            console.error("Error validating admin passkey:", error);
+            return false;
+        }
+
+        return data?.value === passkey;
+    },
+
     // Update username
     updateUsername: async (username: string): Promise<void> => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -371,5 +387,23 @@ export const settingsApi = {
         const { error } = await supabase.rpc('delete_own_account');
         if (error) throw new Error(error.message);
         await supabase.auth.signOut();
+    }
+};
+
+// Admin API
+export const adminApi = {
+    listUsers: async (): Promise<Profile[]> => {
+        const { data, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw new Error(error.message);
+        return data || [];
+    },
+
+    deleteUser: async (userId: string): Promise<void> => {
+        const { error } = await supabase.rpc('admin_delete_user', { target_user_id: userId });
+        if (error) throw new Error(error.message);
     }
 };

@@ -7,19 +7,19 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 // The app will show an error message if these are not set
 export const supabase: SupabaseClient = supabaseUrl && supabaseAnonKey
     ? createClient(supabaseUrl, supabaseAnonKey, {
-          auth: {
-              persistSession: true,
-              autoRefreshToken: true,
-              detectSessionInUrl: true,
-          },
-      })
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+        },
+    })
     : createClient("https://placeholder.supabase.co", "placeholder-key", {
-          auth: {
-              persistSession: false,
-              autoRefreshToken: false,
-              detectSessionInUrl: false,
-          },
-      });
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+        },
+    });
 
 // Check if Supabase is properly configured
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
@@ -30,6 +30,7 @@ export interface Profile {
     name: string | null;
     email: string;
     image: string | null;
+    username: string | null;
     created_at: string;
     updated_at: string;
 }
