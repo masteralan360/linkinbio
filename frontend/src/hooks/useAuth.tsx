@@ -33,7 +33,7 @@ const LOGIN_TIMEOUT_MS = 15000;
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [, setLocation] = useLocation();
     const [user, setUser] = useState<AuthUser | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isSigningUp, setIsSigningUp] = useState(false);
@@ -52,68 +52,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        let timeoutId: ReturnType<typeof setTimeout>;
-
-        // Set a timeout to prevent infinite loading
-        timeoutId = setTimeout(() => {
-            if (mountedRef.current && isLoading) {
-                console.warn("Auth loading timeout - forcing completion");
-                setIsLoading(false);
-            }
-        }, AUTH_TIMEOUT_MS);
-
-        // Get initial session
-        const initAuth = async () => {
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-
-                if (error) {
-                    console.error("Error getting session:", error);
-                    if (mountedRef.current) setIsLoading(false);
-                    return;
-                }
-
-                if (session?.user && mountedRef.current) {
-                    setUser({
-                        id: session.user.id,
-                        email: session.user.email || '',
-                        name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
-                        image: session.user.user_metadata?.avatar_url || null,
-                    });
-                    setIsLoading(false);
-                } else if (mountedRef.current) {
-                    setIsLoading(false);
-                }
-            } catch (error) {
-                console.error("Error getting session:", error);
-                if (mountedRef.current) setIsLoading(false);
-            }
-        };
-
-        initAuth();
-
-        // Listen for auth changes
+        // Listen for auth changes (login/logout, OAuth redirects, etc.)
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
             if (!mountedRef.current) return;
 
             if (session?.user) {
                 setUser({
                     id: session.user.id,
                     email: session.user.email || '',
-                    name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
+                    name:
+                        session.user.user_metadata?.full_name ||
+                        session.user.user_metadata?.name ||
+                        'User',
                     image: session.user.user_metadata?.avatar_url || null,
                 });
             } else {
                 setUser(null);
             }
+
             setIsLoading(false);
         });
 
         return () => {
             mountedRef.current = false;
-            clearTimeout(timeoutId);
             subscription.unsubscribe();
         };
     }, []);

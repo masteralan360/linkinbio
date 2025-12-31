@@ -7,17 +7,20 @@ import { ExternalLink, Link2, AlertCircle } from "lucide-react";
 import ProfilePreview from "@/components/ProfilePreview";
 
 export default function PublicProfile() {
-    const [, params] = useRoute("/profile/:username");
-    const username = params?.username;
+    const [, params] = useRoute("/profile/:slug");
+    const slug = params?.slug;
+
+    // Support both new username-based URLs and legacy id-based URLs
+    const isIdLike = slug ? slug.includes("-") && slug.length > 20 : false;
 
     const {
         data: profile,
         isLoading,
         error,
     } = useQuery({
-        queryKey: ["profile", username],
-        queryFn: () => profileApi.getByUsername(username!),
-        enabled: !!username,
+        queryKey: ["profile", slug],
+        queryFn: () => (isIdLike ? profileApi.getPublicById(slug!) : profileApi.getByUsername(slug!)),
+        enabled: !!slug,
     });
 
     if (isLoading) {

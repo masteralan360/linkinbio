@@ -1,10 +1,40 @@
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { profileApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Link2, ArrowRight, Sparkles, UserPlus } from "lucide-react";
 
 export default function Home() {
     const { isAuthenticated, user } = useAuth();
+    const [profileSlug, setProfileSlug] = useState<string | null>(null);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadProfileSlug = async () => {
+            if (!user) {
+                if (isMounted) setProfileSlug(null);
+                return;
+            }
+
+            try {
+                const profile = await profileApi.get(user.id);
+                if (!isMounted) return;
+                // Prefer username, fall back to user id (legacy URLs)
+                setProfileSlug(profile.user.username || user.id);
+            } catch (error) {
+                console.error("Failed to load profile slug on Home:", error);
+                if (isMounted) setProfileSlug(user.id);
+            }
+        };
+
+        loadProfileSlug();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [user?.id]);
 
     return (
         <div className="min-h-[calc(100vh-12rem)] flex flex-col items-center justify-center text-center px-4">
@@ -40,8 +70,8 @@ export default function Home() {
                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </Button>
                         </Link>
-                        {user && (
-                            <Link href={`/profile/${user.id}`}>
+                        {user && profileSlug && (
+                            <Link href={`/profile/${profileSlug}`}>
                                 <Button size="lg" variant="outline" className="gap-2">
                                     <Sparkles className="w-4 h-4" />
                                     View My Page

@@ -29,7 +29,7 @@ function AppContent() {
                     <Route path="/profile-maker" component={ProfileMaker} />
                     <Route path="/design" component={Design} />
                     <Route path="/settings" component={Settings} />
-                    <Route path="/profile/:username" component={PublicProfile} />
+                    <Route path="/profile/:slug" component={PublicProfile} />
                     <Route>
                         <div className="text-center py-20">
                             <h1 className="text-4xl font-bold mb-4">404</h1>
