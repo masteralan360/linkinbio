@@ -9,13 +9,17 @@ import { LogOut, Link2, LayoutDashboard, Settings } from "lucide-react";
 export default function Navbar() {
     const { user, isAuthenticated, logout, isLoggingOut } = useAuth();
     const [displayName, setDisplayName] = useState<string | null>(null);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
     useEffect(() => {
         let isMounted = true;
 
-        const loadProfileName = async () => {
+        const loadProfile = async () => {
             if (!user) {
-                if (isMounted) setDisplayName(null);
+                if (isMounted) {
+                    setDisplayName(null);
+                    setAvatarUrl(null);
+                }
                 return;
             }
 
@@ -23,14 +27,18 @@ export default function Navbar() {
                 const profile = await profileApi.get(user.id);
                 if (isMounted) {
                     setDisplayName(profile.user.name ?? null);
+                    setAvatarUrl(profile.user.image ?? null);
                 }
             } catch (err) {
                 console.error("Failed to load profile for navbar:", err);
-                if (isMounted) setDisplayName(null);
+                if (isMounted) {
+                    setDisplayName(null);
+                    setAvatarUrl(null);
+                }
             }
         };
 
-        loadProfileName();
+        loadProfile();
 
         return () => {
             isMounted = false;
@@ -68,7 +76,7 @@ export default function Navbar() {
                             </Link>
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
-                                    {user.image && <AvatarImage src={user.image} alt={displayName || ""} />}
+                                    {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName || ""} />}
                                     <AvatarFallback>
                                         {displayName?.charAt(0) || user.email.charAt(0).toUpperCase()}
                                     </AvatarFallback>
